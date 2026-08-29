@@ -1,10 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { TopBar } from "@/components/TopBar";
 import { CheckIcon, ChevronDownIcon } from "@/components/icons";
+import { getTransaction, type Transaction } from "@/lib/store";
+import { formatKES, formatDateTime } from "@/lib/format";
 
 const steps = [
   { key: "initiated", label: "Initiated", state: "done" as const },
@@ -28,9 +31,7 @@ function StepCircle({ state }: { state: "done" | "current" | "upcoming" }) {
       </span>
     );
   }
-  return (
-    <span className="w-8 h-8 rounded-full bg-white border-2 border-slate-200 shrink-0" />
-  );
+  return <span className="w-8 h-8 rounded-full bg-white border-2 border-slate-200 shrink-0" />;
 }
 
 function DetailRow({ label, value }: { label: string; value: string }) {
@@ -42,8 +43,15 @@ function DetailRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-export default function ConfirmationPage() {
+function ConfirmationInner() {
+  const params = useSearchParams();
+  const ref = params.get("ref") ?? "";
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [tx, setTx] = useState<Transaction | null>(null);
+
+  useEffect(() => {
+    if (ref) setTx(getTransaction(ref) ?? null);
+  }, [ref]);
 
   return (
     <AppShell>
@@ -82,7 +90,7 @@ export default function ConfirmationPage() {
               Total amount
             </span>
             <span className="text-[26px] font-bold text-slate-900">
-              KES 2,450.00
+              {tx ? formatKES(tx.amount) : "—"}
             </span>
           </div>
         </div>
@@ -129,18 +137,18 @@ export default function ConfirmationPage() {
           </button>
           {detailsOpen && (
             <div className="px-5 pb-4 divide-y divide-slate-100 border-t border-slate-100">
-              <DetailRow label="Service" value="M-Pesa Mobile" />
-              <DetailRow label="Reference" value="757346436" />
-              <DetailRow label="Label" value="MAJI MAZURI FLOWERS LIMITED" />
-              <DetailRow label="Payment source" value="Product Testing B (KES)" />
-              <DetailRow label="Time" value="29/08/2026 21:04:09" />
-              <DetailRow label="XPayor Reference" value="XPWGMCK2QE6A" />
+              <DetailRow label="Service" value={tx?.service ?? "—"} />
+              <DetailRow label="Reference" value={tx?.reference ?? "—"} />
+              <DetailRow label="Label" value={tx?.label ?? "—"} />
+              <DetailRow label="Payment source" value={tx?.fromAccount ?? "—"} />
+              <DetailRow label="Time" value={tx ? formatDateTime(tx.createdAt) : "—"} />
+              <DetailRow label="XPayor Reference" value={tx?.id ?? ref} />
             </div>
           )}
         </div>
 
         <Link
-          href="/"
+          href="/transactions"
           className="block w-full text-center bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm py-3.5 rounded-lg mb-3 transition-colors"
         >
           View Transactions
@@ -159,5 +167,13 @@ export default function ConfirmationPage() {
         </div>
       </div>
     </AppShell>
+  );
+}
+
+export default function ConfirmationPage() {
+  return (
+    <Suspense fallback={null}>
+      <ConfirmationInner />
+    </Suspense>
   );
 }

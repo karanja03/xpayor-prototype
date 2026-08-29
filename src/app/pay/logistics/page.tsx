@@ -3,11 +3,13 @@
 import { useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { TopBar } from "@/components/TopBar";
-import { SearchIcon } from "@/components/icons";
+import { SearchIcon, ShipIcon } from "@/components/icons";
+import { usePaymentFlowModal } from "@/components/usePaymentFlowModal";
 import { logisticsAll } from "@/lib/data";
 
 export default function LogisticsAllPage() {
   const [query, setQuery] = useState("");
+  const { openFor, modal } = usePaymentFlowModal();
 
   const list = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -39,12 +41,13 @@ export default function LogisticsAllPage() {
           {list.map((p) => (
             <button
               key={p.name}
+              onClick={() => openFor(p.name)}
               className="flex items-center gap-3 px-2.5 py-2.5 rounded-lg hover:bg-slate-50 text-left transition-colors"
             >
               <div
-                className={`w-8.5 h-8.5 rounded-[9px] ${p.bg} ${p.fg} flex items-center justify-center text-[11px] font-bold shrink-0`}
+                className={`w-8.5 h-8.5 rounded-[9px] ${p.bg} ${p.fg} flex items-center justify-center shrink-0`}
               >
-                {p.initials}
+                <ShipIcon className="w-4 h-4" />
               </div>
               <div className="text-[13.5px] font-semibold text-slate-900 truncate">
                 {p.name}
@@ -53,6 +56,8 @@ export default function LogisticsAllPage() {
           ))}
         </div>
       </div>
+
+      {modal}
     </AppShell>
   );
 }

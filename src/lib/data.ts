@@ -119,11 +119,3 @@ export const paymentLabels: PaymentLabel[] = [
   { name: "Team Travel & Accommodation" },
   { name: "Utilities - Kenya Power" },
 ];
-
-export const recentActivity = [
-  { name: "Sharaf Shipping Agency (K) LTD", meta: "Bank Transfer · Today, 11:42", amount: "KES 145,000", initials: "SSA", bg: "bg-indigo-50", fg: "text-indigo-600", status: "Completed", statusBg: "bg-green-50", statusFg: "text-green-700" },
-  { name: "KRA", meta: "Bank Transfer · Today, 09:10", amount: "KES 62,400", initials: "KRA", bg: "bg-emerald-50", fg: "text-emerald-700", status: "Completed", statusBg: "bg-green-50", statusFg: "text-green-700" },
-  { name: "M-Pesa · 07** 346 436", meta: "Mobile Money · Yesterday, 21:04", amount: "KES 2,450", initials: "M", bg: "bg-emerald-50", fg: "text-emerald-600", status: "Pending", statusBg: "bg-amber-50", statusFg: "text-amber-800" },
-  { name: "Mitchell Cotts CFS", meta: "Bank Transfer · Yesterday, 15:22", amount: "KES 88,000", initials: "MC", bg: "bg-slate-100", fg: "text-slate-600", status: "Completed", statusBg: "bg-green-50", statusFg: "text-green-700" },
-  { name: "Africa Cargo Handling Ltd", meta: "Bank Transfer · 2 days ago", amount: "KES 214,900", initials: "ACHL", bg: "bg-orange-50", fg: "text-orange-700", status: "Completed", statusBg: "bg-green-50", statusFg: "text-green-700" },
-];

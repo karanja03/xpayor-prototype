@@ -159,6 +159,70 @@ export function ChevronRightIcon({ className = "" }: IconProps) {
   );
 }
 
+export function MobileMoneyIcon({ className = "" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className={`${base} ${className}`}>
+      <rect x="7" y="2.5" width="10" height="19" rx="2" />
+      <line x1="7" y1="17.5" x2="17" y2="17.5" />
+      <circle cx="12" cy="11" r="2.6" />
+    </svg>
+  );
+}
+
+export function BankBuildingIcon({ className = "" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className={`${base} ${className}`}>
+      <path d="M3 9.5 12 4l9 5.5" />
+      <line x1="4" y1="20" x2="20" y2="20" />
+      <line x1="5.5" y1="9.5" x2="5.5" y2="18" />
+      <line x1="10" y1="9.5" x2="10" y2="18" />
+      <line x1="14" y1="9.5" x2="14" y2="18" />
+      <line x1="18.5" y1="9.5" x2="18.5" y2="18" />
+    </svg>
+  );
+}
+
+export function GlobeIcon({ className = "" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className={`${base} ${className}`}>
+      <circle cx="12" cy="12" r="9" />
+      <ellipse cx="12" cy="12" rx="4" ry="9" />
+      <line x1="3" y1="12" x2="21" y2="12" />
+    </svg>
+  );
+}
+
+export function ShipIcon({ className = "" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className={`${base} ${className}`}>
+      <path d="M4 15.5 2.5 19a12 12 0 0 0 19 0L20 15.5" />
+      <path d="M6 15.5V6h9l3 5" />
+      <line x1="6" y1="9.5" x2="18" y2="9.5" />
+    </svg>
+  );
+}
+
+export function GovBuildingIcon({ className = "" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className={`${base} ${className}`}>
+      <polygon points="12 3 21 8 3 8" />
+      <line x1="4" y1="20" x2="20" y2="20" />
+      <line x1="5.5" y1="8" x2="5.5" y2="18" />
+      <line x1="9.5" y1="8" x2="9.5" y2="18" />
+      <line x1="14.5" y1="8" x2="14.5" y2="18" />
+      <line x1="18.5" y1="8" x2="18.5" y2="18" />
+    </svg>
+  );
+}
+
+export function BoltIcon({ className = "" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className={`${base} ${className}`}>
+      <polygon points="13 2 4 14 11 14 10 22 20 9 13 9 13 2" />
+    </svg>
+  );
+}
+
 export function UserIcon({ className = "" }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={`${base} ${className}`}>

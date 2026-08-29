@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -13,11 +14,12 @@ import {
   SettingsIcon,
   ChevronDownIcon,
 } from "./icons";
+import { getTransactions } from "@/lib/store";
 
 const navItems = [
   { key: "home", label: "Home", href: "/", icon: HomeIcon },
-  { key: "tasks", label: "Tasks", icon: TasksIcon, badge: true },
-  { key: "transactions", label: "Transactions", icon: TransactionsIcon },
+  { key: "tasks", label: "Tasks", href: "/tasks", icon: TasksIcon, badge: true },
+  { key: "transactions", label: "Transactions", href: "/transactions", icon: TransactionsIcon },
   { key: "statements", label: "Statements", icon: StatementsIcon },
   { key: "reimbursements", label: "Reimbursements", icon: ReimbursementsIcon },
   { key: "beneficiaries", label: "Beneficiaries", icon: BeneficiariesIcon },
@@ -27,6 +29,11 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const [pendingCount, setPendingCount] = useState(0);
+
+  useEffect(() => {
+    setPendingCount(getTransactions().filter((t) => t.status === "Pending").length);
+  }, [pathname]);
 
   return (
     <aside className="w-[232px] shrink-0 border-r border-slate-200 bg-white flex flex-col p-3">
@@ -56,7 +63,12 @@ export function Sidebar() {
             return (
               <Link key={item.key} href={item.href} className={rowClasses}>
                 <Icon className="w-[18px] h-[18px]" />
-                {item.label}
+                <span>{item.label}</span>
+                {item.badge && pendingCount > 0 && (
+                  <span className="ml-auto min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+                    {pendingCount}
+                  </span>
+                )}
               </Link>
             );
           }
@@ -65,9 +77,6 @@ export function Sidebar() {
             <div key={item.key} className={`${rowClasses} cursor-default`}>
               <Icon className="w-[18px] h-[18px]" />
               <span>{item.label}</span>
-              {item.badge && (
-                <span className="w-1.5 h-1.5 rounded-full bg-red-500 ml-auto" />
-              )}
             </div>
           );
         })}

@@ -1,8 +1,40 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { TopBar } from "@/components/TopBar";
-import { recentActivity } from "@/lib/data";
+import { avatarFor } from "@/lib/avatar";
+import { formatDate, formatKES } from "@/lib/format";
+import { getTransactions, type Transaction } from "@/lib/store";
 
 export default function HomePage() {
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+
+  useEffect(() => {
+    setTransactions(getTransactions());
+  }, []);
+
+  const pending = transactions.filter((t) => t.status === "Pending");
+  const pendingTotal = pending.reduce((sum, t) => sum + t.amount, 0);
+
+  const now = new Date();
+  const paidThisMonth = transactions.filter((t) => {
+    if (t.status !== "Completed") return false;
+    const d = new Date(t.createdAt);
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  });
+  const paidTotal = paidThisMonth.reduce((sum, t) => sum + t.amount, 0);
+
+  const recent = transactions.slice(0, 5);
+
+  const statusStyles: Record<string, string> = {
+    Pending: "bg-amber-50 text-amber-800",
+    Completed: "bg-green-50 text-green-700",
+    Cancelled: "bg-slate-100 text-slate-500",
+    Failed: "bg-red-50 text-red-700",
+  };
+
   return (
     <AppShell>
       <TopBar title="Home" showPay />
@@ -30,27 +62,30 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-xl p-5">
+          <Link
+            href="/tasks"
+            className="bg-white border border-slate-200 rounded-xl p-5 hover:border-brand-300 transition-colors"
+          >
             <div className="text-[12.5px] font-semibold text-slate-400 mb-2.5">
               PENDING APPROVAL
             </div>
             <div className="text-2xl font-bold text-slate-900">
-              KES 184,520
+              {formatKES(pendingTotal)}
             </div>
             <div className="text-xs font-semibold text-amber-600 mt-1.5">
-              7 transactions awaiting sign-off
+              {pending.length} transaction{pending.length === 1 ? "" : "s"} awaiting sign-off
             </div>
-          </div>
+          </Link>
 
           <div className="bg-white border border-slate-200 rounded-xl p-5">
             <div className="text-[12.5px] font-semibold text-slate-400 mb-2.5">
               PAID OUT THIS MONTH
             </div>
             <div className="text-2xl font-bold text-slate-900">
-              KES 1,092,760
+              {formatKES(paidTotal)}
             </div>
             <div className="text-xs font-semibold text-slate-400 mt-1.5">
-              across 38 payments
+              across {paidThisMonth.length} payments
             </div>
           </div>
         </div>
@@ -59,38 +94,51 @@ export default function HomePage() {
           <h2 className="text-[15px] font-semibold text-slate-900">
             Recent activity
           </h2>
-          <span className="text-[13px] font-semibold text-brand-600">
+          <Link
+            href="/transactions"
+            className="text-[13px] font-semibold text-brand-600 hover:text-brand-700"
+          >
             View all
-          </span>
+          </Link>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-          {recentActivity.map((row) => (
-            <div
-              key={row.name}
-              className="flex items-center gap-3.5 px-4.5 py-3.5 border-b border-slate-100 last:border-b-0"
-            >
-              <div
-                className={`w-9.5 h-9.5 rounded-[10px] ${row.bg} ${row.fg} flex items-center justify-center text-xs font-bold shrink-0`}
-              >
-                {row.initials}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-[13.5px] font-semibold text-slate-900 truncate">
-                  {row.name}
-                </div>
-                <div className="text-xs text-slate-400 mt-0.5">{row.meta}</div>
-              </div>
-              <div className="text-[13.5px] font-semibold text-slate-900 mr-4">
-                {row.amount}
-              </div>
-              <span
-                className={`text-[11.5px] font-semibold px-2.5 py-1 rounded-full ${row.statusBg} ${row.statusFg} shrink-0`}
-              >
-                {row.status}
-              </span>
+          {recent.length === 0 && (
+            <div className="px-6 py-10 text-center text-sm text-slate-400">
+              No activity yet.
             </div>
-          ))}
+          )}
+          {recent.map((row) => {
+            const avatar = avatarFor(row.to);
+            return (
+              <div
+                key={row.id}
+                className="flex items-center gap-3.5 px-4.5 py-3.5 border-b border-slate-100 last:border-b-0"
+              >
+                <div
+                  className={`w-9.5 h-9.5 rounded-[10px] ${avatar.bg} ${avatar.fg} flex items-center justify-center text-xs font-bold shrink-0`}
+                >
+                  {avatar.initials}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[13.5px] font-semibold text-slate-900 truncate">
+                    {row.to}
+                  </div>
+                  <div className="text-xs text-slate-400 mt-0.5">
+                    {row.to === row.service ? formatDate(row.createdAt) : row.service}
+                  </div>
+                </div>
+                <div className="text-[13.5px] font-semibold text-slate-900 mr-4">
+                  {formatKES(row.amount)}
+                </div>
+                <span
+                  className={`text-[11.5px] font-semibold px-2.5 py-1 rounded-full ${statusStyles[row.status]} shrink-0`}
+                >
+                  {row.status}
+                </span>
+              </div>
+            );
+          })}
         </div>
       </div>
     </AppShell>
