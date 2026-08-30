@@ -1,5 +1,9 @@
+export function formatMoney(amount: number, currency: string = "KES"): string {
+  return `${currency} ${amount.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
 export function formatKES(amount: number): string {
-  return `KES ${amount.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return formatMoney(amount, "KES");
 }
 
 export function formatDate(iso: string): string {

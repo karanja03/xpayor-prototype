@@ -4,18 +4,26 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { TopBar } from "@/components/TopBar";
+import { TransactionDetailsModal } from "@/components/TransactionDetailsModal";
 import { ArrowUpCircleIcon, EyeIcon, RefreshIcon } from "@/components/icons";
 import { accounts } from "@/lib/accounts";
 import { avatarFor } from "@/lib/avatar";
-import { formatDate, formatKES } from "@/lib/format";
-import { getTransactions, type Transaction } from "@/lib/store";
+import { formatDate, formatKES, formatMoney } from "@/lib/format";
+import { getTransactions, updateTransactionStatus, type Transaction } from "@/lib/store";
 
 export default function HomePage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [active, setActive] = useState<Transaction | null>(null);
 
   useEffect(() => {
     setTransactions(getTransactions());
   }, []);
+
+  function recall(id: string) {
+    updateTransactionStatus(id, "Cancelled");
+    setTransactions(getTransactions());
+    setActive((prev) => (prev && prev.id === id ? { ...prev, status: "Cancelled" } : prev));
+  }
 
   const recent = transactions.slice(0, 5);
 
@@ -96,9 +104,10 @@ export default function HomePage() {
           {recent.map((row) => {
             const avatar = avatarFor(row.to);
             return (
-              <div
+              <button
                 key={row.id}
-                className="flex items-center gap-3 sm:gap-3.5 px-3.5 sm:px-4.5 py-3.5 border-b border-slate-100 last:border-b-0"
+                onClick={() => setActive(row)}
+                className="w-full flex items-center gap-3 sm:gap-3.5 px-3.5 sm:px-4.5 py-3.5 border-b border-slate-100 last:border-b-0 text-left hover:bg-slate-50"
               >
                 <div
                   className={`w-9.5 h-9.5 rounded-[10px] ${avatar.bg} ${avatar.fg} flex items-center justify-center text-xs font-bold shrink-0`}
@@ -121,13 +130,21 @@ export default function HomePage() {
                   </div>
                 </div>
                 <div className="text-[13.5px] font-semibold text-slate-900 text-right shrink-0">
-                  {formatKES(row.amount)}
+                  {formatMoney(row.amount, row.currency)}
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>
       </div>
+
+      {active && (
+        <TransactionDetailsModal
+          transaction={active}
+          onClose={() => setActive(null)}
+          onRecall={recall}
+        />
+      )}
     </AppShell>
   );
 }

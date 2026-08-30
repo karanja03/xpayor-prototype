@@ -9,6 +9,7 @@ import {
   ChevronDownIcon,
   DescriptionIcon,
   SearchIcon,
+  UploadCloudIcon,
 } from "@/components/icons";
 import { paymentLabels } from "@/lib/data";
 import { addCustomLabel, getCustomLabels } from "@/lib/store";
@@ -79,8 +80,13 @@ function PaymentFormInner() {
   const service = serviceLabelFor(method, type);
   const title = payee ? `Pay ${payee}` : `Pay ${service}`;
 
+  const [batchMode, setBatchMode] = useState<"single" | "batch">("single");
+  const [batchFileName, setBatchFileName] = useState<string | null>(null);
+  const [dragActive, setDragActive] = useState(false);
+
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
   const [amount, setAmount] = useState("");
+  const [currency, setCurrency] = useState<"KES" | "USD">("KES");
   const [sourceAccount, setSourceAccount] = useState(sourceAccountLabel(accounts[0]));
   const [saveBeneficiary, setSaveBeneficiary] = useState(false);
 
@@ -133,18 +139,34 @@ function PaymentFormInner() {
     chooseLabel(trimmedQuery);
   }
 
+  const canContinue = batchMode === "single" || !!batchFileName;
+
   function handleContinue() {
+    if (!canContinue) return;
     const params = new URLSearchParams();
     params.set("method", method);
     params.set("type", type);
     if (payee) params.set("payee", payee);
-    params.set("reference", Object.values(fieldValues).filter(Boolean).join(" - "));
-    for (const f of fields) params.set(f.key, fieldValues[f.key] ?? "");
-    params.set("amount", amount);
+    params.set("mode", batchMode);
     params.set("label", selectedLabel || payee);
     params.set("source", sourceAccount);
     params.set("saveBen", saveBeneficiary ? "1" : "0");
+
+    if (batchMode === "batch") {
+      params.set("reference", batchFileName ?? "");
+    } else {
+      params.set("reference", Object.values(fieldValues).filter(Boolean).join(" - "));
+      for (const f of fields) params.set(f.key, fieldValues[f.key] ?? "");
+      params.set("amount", amount);
+      params.set("currency", currency);
+    }
+
     router.push(`/pay/review?${params.toString()}`);
+  }
+
+  function handleBatchFile(file: File | null | undefined) {
+    if (!file) return;
+    setBatchFileName(file.name);
   }
 
   return (
@@ -170,25 +192,59 @@ function PaymentFormInner() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-          {fields.map((f) => (
-            <div key={f.key}>
-              <label className="block text-[13px] font-semibold text-brand-600 mb-2">
-                {f.label}
-              </label>
-              <input
-                type="text"
-                value={fieldValues[f.key] ?? ""}
-                onChange={(e) =>
-                  setFieldValues((prev) => ({ ...prev, [f.key]: e.target.value }))
-                }
-                placeholder={f.placeholder}
-                className="w-full px-4 py-3 border-2 border-brand-500 rounded-lg text-sm text-slate-900 outline-none"
-              />
-            </div>
-          ))}
-          {fields.length === 1 && (
-            <div>
+        <div className="mb-6">
+          <label className="block text-[13px] font-semibold text-slate-700 mb-2">
+            Payment type
+          </label>
+          <div className="flex gap-5">
+            {(["single", "batch"] as const).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setBatchMode(mode)}
+                className="flex items-center gap-2 text-sm"
+              >
+                <span
+                  className={`w-[18px] h-[18px] rounded-full border-2 flex items-center justify-center ${
+                    batchMode === mode ? "border-brand-600" : "border-slate-300"
+                  }`}
+                >
+                  {batchMode === mode && (
+                    <span className="w-2.5 h-2.5 rounded-full bg-brand-600" />
+                  )}
+                </span>
+                <span
+                  className={
+                    batchMode === mode
+                      ? "font-semibold text-slate-900"
+                      : "font-medium text-slate-500"
+                  }
+                >
+                  {mode === "single" ? "Single" : "Batch File"}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {batchMode === "single" ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+            {fields.map((f) => (
+              <div key={f.key}>
+                <label className="block text-[13px] font-semibold text-brand-600 mb-2">
+                  {f.label}
+                </label>
+                <input
+                  type="text"
+                  value={fieldValues[f.key] ?? ""}
+                  onChange={(e) =>
+                    setFieldValues((prev) => ({ ...prev, [f.key]: e.target.value }))
+                  }
+                  placeholder={f.placeholder}
+                  className="w-full px-4 py-3 border-2 border-brand-500 rounded-lg text-sm text-slate-900 outline-none"
+                />
+              </div>
+            ))}
+            <div className={fields.length > 1 ? "sm:col-span-2 max-w-xs" : ""}>
               <label className="block text-[13px] font-semibold text-brand-600 mb-2">
                 Amount
               </label>
@@ -200,31 +256,68 @@ function PaymentFormInner() {
                   placeholder="0.00"
                   className="flex-1 px-4 py-3 text-sm text-slate-900 outline-none min-w-0"
                 />
-                <div className="flex items-center gap-1.5 px-3 bg-slate-50 border-l border-slate-200 text-sm font-semibold text-slate-600">
-                  KES
-                </div>
+                <select
+                  value={currency}
+                  onChange={(e) => setCurrency(e.target.value as "KES" | "USD")}
+                  className="pl-3 pr-2 bg-slate-50 border-l border-slate-200 text-sm font-semibold text-slate-600 outline-none"
+                >
+                  <option value="KES">🇰🇪 KES</option>
+                  <option value="USD">🇺🇸 USD</option>
+                </select>
               </div>
             </div>
-          )}
-        </div>
-
-        {fields.length > 1 && (
-          <div className="mb-6 max-w-xs">
-            <label className="block text-[13px] font-semibold text-brand-600 mb-2">
-              Amount
-            </label>
-            <div className="flex items-stretch border-2 border-brand-500 rounded-lg overflow-hidden">
+          </div>
+        ) : (
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-[13px] font-semibold text-slate-700">
+                Upload payments file
+              </label>
+              <a
+                href="/xpayor-batch-template.csv"
+                download
+                className="text-[12.5px] font-semibold text-brand-600 hover:text-brand-700 flex items-center gap-1"
+              >
+                <UploadCloudIcon className="w-3.5 h-3.5 rotate-180" />
+                Download template
+              </a>
+            </div>
+            <label
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragActive(true);
+              }}
+              onDragLeave={() => setDragActive(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragActive(false);
+                handleBatchFile(e.dataTransfer.files?.[0]);
+              }}
+              className={`flex flex-col items-center justify-center gap-2 px-6 py-10 border-2 border-dashed rounded-xl text-center cursor-pointer transition-colors ${
+                dragActive
+                  ? "border-brand-500 bg-brand-50"
+                  : "border-slate-300 hover:border-slate-400"
+              }`}
+            >
+              <UploadCloudIcon className="w-7 h-7 text-slate-400" />
+              <div className="text-sm font-semibold text-slate-700">
+                {batchFileName ?? "Drag & drop a file, or click to select"}
+              </div>
+              <div className="text-xs text-slate-400">
+                Supported: CSV, XLS, XLSX &middot; Max size: 5MB
+              </div>
               <input
-                type="text"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="0.00"
-                className="flex-1 px-4 py-3 text-sm text-slate-900 outline-none min-w-0"
+                type="file"
+                accept=".csv,.xls,.xlsx"
+                className="hidden"
+                onChange={(e) => handleBatchFile(e.target.files?.[0])}
               />
-              <div className="flex items-center gap-1.5 px-3 bg-slate-50 border-l border-slate-200 text-sm font-semibold text-slate-600">
-                KES
-              </div>
-            </div>
+            </label>
+            {!batchFileName && (
+              <p className="text-xs text-amber-700 mt-2">
+                Upload a file to continue.
+              </p>
+            )}
           </div>
         )}
 
@@ -349,7 +442,8 @@ function PaymentFormInner() {
           </button>
           <button
             onClick={handleContinue}
-            className="flex-1 sm:flex-none sm:px-8 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-semibold transition-colors"
+            disabled={!canContinue}
+            className="flex-1 sm:flex-none sm:px-8 py-3 bg-brand-600 hover:bg-brand-700 disabled:opacity-40 disabled:hover:bg-brand-600 disabled:cursor-not-allowed text-white rounded-lg text-sm font-semibold transition-colors"
           >
             Continue
           </button>

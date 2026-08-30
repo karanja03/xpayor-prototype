@@ -3,14 +3,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { TopBar } from "@/components/TopBar";
-import { CloseIcon, SearchIcon } from "@/components/icons";
+import { SearchIcon } from "@/components/icons";
+import { TransactionDetailsModal } from "@/components/TransactionDetailsModal";
 import {
   getTransactions,
   updateTransactionStatus,
   type Transaction,
   type TxStatus,
 } from "@/lib/store";
-import { formatDate, formatDateTime, formatKES } from "@/lib/format";
+import { formatDate, formatKES, formatMoney } from "@/lib/format";
 
 const statusStyles: Record<TxStatus, string> = {
   Pending: "bg-amber-50 text-amber-800",
@@ -34,6 +35,8 @@ export default function TransactionsPage() {
     return list.filter((t) => t.reference.toLowerCase().includes(q));
   }, [list, query]);
 
+  // Amounts can be mixed currencies once USD payments exist; the running
+  // total is a KES-denominated approximation for the header summary only.
   const total = filtered.reduce((sum, t) => sum + t.amount, 0);
 
   function recall(id: string) {
@@ -95,7 +98,7 @@ export default function TransactionsPage() {
                     {t.reference}
                   </td>
                   <td className="px-5 py-3.5 text-[13.5px] font-semibold text-slate-900">
-                    {formatKES(t.amount)}
+                    {formatMoney(t.amount, t.currency)}
                   </td>
                   <td className="px-5 py-3.5 text-[13.5px] text-slate-600">{t.to}</td>
                   <td className="px-5 py-3.5 text-[13.5px] text-slate-400">
@@ -148,7 +151,7 @@ export default function TransactionsPage() {
                   <div className="text-xs text-slate-400 truncate mt-0.5">{t.to}</div>
                 </div>
                 <div className="text-[13.5px] font-semibold text-slate-900 text-right shrink-0">
-                  {formatKES(t.amount)}
+                  {formatMoney(t.amount, t.currency)}
                 </div>
               </div>
               <div className="flex items-center justify-between gap-3">
@@ -172,101 +175,11 @@ export default function TransactionsPage() {
       </div>
 
       {active && (
-        <div
-          className="fixed inset-0 bg-slate-900/45 flex items-end sm:items-center justify-center z-50"
-          onClick={() => setActive(null)}
-        >
-          <div
-            className="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:w-[460px] max-h-[85vh] overflow-auto p-6 sm:p-7 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-1">
-              <h3 className="text-[17px] font-bold text-slate-900">Transaction Details</h3>
-              <button
-                onClick={() => setActive(null)}
-                className="w-5 h-5 text-slate-400 hover:text-slate-600"
-              >
-                <CloseIcon className="w-4 h-4" />
-              </button>
-            </div>
-            <p className="text-[12.5px] text-slate-400 mb-5">{active.id}</p>
-
-            <div className="bg-brand-50 rounded-xl p-4 mb-5">
-              <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">
-                Amount
-              </div>
-              <div className="text-xl font-bold text-slate-900">
-                {formatKES(active.amount)}
-              </div>
-            </div>
-
-            <h4 className="text-[12.5px] font-bold text-slate-500 uppercase tracking-wide mb-1">
-              Transaction Information
-            </h4>
-            <div className="divide-y divide-slate-100 mb-5">
-              <div className="flex items-center justify-between py-2.5">
-                <span className="text-[13px] text-slate-400">Service</span>
-                <span className="text-[13px] font-semibold text-slate-900">
-                  {active.service}
-                </span>
-              </div>
-              <div className="flex items-center justify-between py-2.5">
-                <span className="text-[13px] text-slate-400">Reference</span>
-                <span className="text-[13px] font-semibold text-slate-900">
-                  {active.reference}
-                </span>
-              </div>
-              <div className="flex items-center justify-between py-2.5">
-                <span className="text-[13px] text-slate-400">Label</span>
-                <span className="text-[13px] font-semibold text-slate-900">
-                  {active.label}
-                </span>
-              </div>
-              <div className="flex items-center justify-between py-2.5">
-                <span className="text-[13px] text-slate-400">Status</span>
-                <span
-                  className={`text-[11.5px] font-semibold px-2.5 py-1 rounded-full ${statusStyles[active.status]}`}
-                >
-                  {active.status}
-                </span>
-              </div>
-              <div className="flex items-center justify-between py-2.5">
-                <span className="text-[13px] text-slate-400">From Account</span>
-                <span className="text-[13px] font-semibold text-slate-900">
-                  {active.fromAccount}
-                </span>
-              </div>
-              <div className="flex items-center justify-between py-2.5">
-                <span className="text-[13px] text-slate-400">To</span>
-                <span className="text-[13px] font-semibold text-slate-900">{active.to}</span>
-              </div>
-            </div>
-
-            <h4 className="text-[12.5px] font-bold text-slate-500 uppercase tracking-wide mb-1">
-              Approval Workflow
-            </h4>
-            <div className="flex items-center justify-between py-2.5 mb-5">
-              <span className="text-[13px] text-slate-400">Created By</span>
-              <span className="text-right">
-                <span className="block text-[13px] font-semibold text-slate-900">
-                  {active.createdBy}
-                </span>
-                <span className="block text-[11.5px] text-slate-400 mt-0.5">
-                  {formatDateTime(active.createdAt)}
-                </span>
-              </span>
-            </div>
-
-            {active.status === "Pending" && (
-              <button
-                onClick={() => recall(active.id)}
-                className="w-full border border-red-200 text-red-600 hover:bg-red-50 font-semibold text-sm py-3 rounded-lg transition-colors"
-              >
-                Recall Transaction
-              </button>
-            )}
-          </div>
-        </div>
+        <TransactionDetailsModal
+          transaction={active}
+          onClose={() => setActive(null)}
+          onRecall={recall}
+        />
       )}
     </AppShell>
   );

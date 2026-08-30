@@ -261,6 +261,16 @@ export function ArrowUpCircleIcon({ className = "" }: IconProps) {
   );
 }
 
+export function UploadCloudIcon({ className = "" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className={`${base} ${className}`}>
+      <path d="M7 18a4.5 4.5 0 0 1-1-8.9 5.5 5.5 0 0 1 10.6-2A4.5 4.5 0 0 1 17 18" />
+      <line x1="12" y1="20" x2="12" y2="11" />
+      <polyline points="8.5 14 12 10.5 15.5 14" />
+    </svg>
+  );
+}
+
 export function UserIcon({ className = "" }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={`${base} ${className}`}>

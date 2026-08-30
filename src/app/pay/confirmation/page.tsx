@@ -7,7 +7,7 @@ import { AppShell } from "@/components/AppShell";
 import { TopBar } from "@/components/TopBar";
 import { CheckIcon, ChevronDownIcon } from "@/components/icons";
 import { getTransaction, type Transaction } from "@/lib/store";
-import { formatKES, formatDateTime } from "@/lib/format";
+import { formatMoney, formatDateTime } from "@/lib/format";
 
 const steps = [
   { key: "initiated", label: "Initiated", state: "done" as const },
@@ -90,7 +90,7 @@ function ConfirmationInner() {
               Total amount
             </span>
             <span className="text-[26px] font-bold text-slate-900">
-              {tx ? formatKES(tx.amount) : "—"}
+              {tx ? formatMoney(tx.amount, tx.currency) : "—"}
             </span>
           </div>
         </div>
@@ -154,17 +154,12 @@ function ConfirmationInner() {
           View Transactions
         </Link>
 
-        <div className="flex gap-3">
-          <button className="flex-1 px-4 py-2.5 border border-slate-200 rounded-lg text-[13px] font-semibold text-slate-600 hover:bg-slate-50">
-            Save as Beneficiary
-          </button>
-          <Link
-            href="/pay"
-            className="flex-1 px-4 py-2.5 border border-slate-200 rounded-lg text-[13px] font-semibold text-slate-600 hover:bg-slate-50 text-center"
-          >
-            Make another transfer
-          </Link>
-        </div>
+        <Link
+          href="/pay"
+          className="block w-full px-4 py-2.5 border border-slate-200 rounded-lg text-[13px] font-semibold text-slate-600 hover:bg-slate-50 text-center"
+        >
+          Make another transfer
+        </Link>
       </div>
     </AppShell>
   );

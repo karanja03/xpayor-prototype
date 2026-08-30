@@ -18,20 +18,22 @@ export function TopBar({
   return (
     <div className="h-16 shrink-0 flex items-center justify-between px-4 sm:px-8 border-b border-slate-200 bg-white">
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-        <button
-          onClick={openMobileNav}
-          className="md:hidden w-8 h-8 -ml-1 flex items-center justify-center text-slate-600 shrink-0"
-          aria-label="Open menu"
-        >
-          <HamburgerIcon className="w-5 h-5" />
-        </button>
-        {backHref && (
+        {backHref ? (
           <Link
             href={backHref}
-            className="w-7 h-7 hidden sm:flex items-center justify-center text-slate-600 shrink-0"
+            className="w-8 h-8 -ml-1 flex items-center justify-center text-slate-600 shrink-0"
+            aria-label="Back"
           >
             <ChevronLeftIcon className="w-[18px] h-[18px]" />
           </Link>
+        ) : (
+          <button
+            onClick={openMobileNav}
+            className="md:hidden w-8 h-8 -ml-1 flex items-center justify-center text-slate-600 shrink-0"
+            aria-label="Open menu"
+          >
+            <HamburgerIcon className="w-5 h-5" />
+          </button>
         )}
         <div className="text-[15px] font-semibold text-slate-900 truncate">
           {title}
