@@ -60,7 +60,7 @@ function Tile({
   return (
     <button
       onClick={onClick}
-      className="flex flex-col items-center gap-2 w-[148px] px-2.5 py-4 border border-slate-200 rounded-xl bg-white hover:border-brand-500 hover:shadow-sm transition-colors text-center"
+      className="flex flex-col items-center gap-2 w-full px-2.5 py-4 border border-slate-200 rounded-xl bg-white hover:border-brand-500 hover:shadow-sm transition-colors text-center"
     >
       <div
         className={`w-11 h-11 rounded-[11px] ${payee.bg} ${payee.fg} flex items-center justify-center text-xs font-bold`}
@@ -78,7 +78,7 @@ function ViewAllTile({ href, count }: { href: string; count: number }) {
   return (
     <Link
       href={href}
-      className="flex flex-col items-center justify-center gap-2 w-[148px] px-2.5 py-4 border border-dashed border-slate-300 rounded-xl bg-white hover:border-brand-500 hover:bg-brand-50/40 transition-colors text-center"
+      className="flex flex-col items-center justify-center gap-2 w-full px-2.5 py-4 border border-dashed border-slate-300 rounded-xl bg-white hover:border-brand-500 hover:bg-brand-50/40 transition-colors text-center"
     >
       <div className="w-11 h-11 rounded-[11px] bg-slate-100 text-slate-500 flex items-center justify-center">
         <ArrowRightIcon className="w-5 h-5" />
@@ -112,7 +112,7 @@ function CategorySection({
       <h2 className="text-[13px] font-bold text-slate-500 uppercase tracking-wide mb-3.5">
         {title}
       </h2>
-      <div className="flex flex-wrap gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
         {items.map((p) => (
           <Tile key={p.name} payee={p} onClick={() => onTileClick(p.name)} icon={icon} />
         ))}
