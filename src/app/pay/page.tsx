@@ -112,7 +112,7 @@ function CategorySection({
       <h2 className="text-[13px] font-bold text-slate-500 uppercase tracking-wide mb-3.5">
         {title}
       </h2>
-      <div className="flex flex-wrap justify-center sm:justify-start gap-3">
+      <div className="flex flex-wrap gap-3">
         {items.map((p) => (
           <Tile key={p.name} payee={p} onClick={() => onTileClick(p.name)} icon={icon} />
         ))}
@@ -195,7 +195,7 @@ export default function PayToPage() {
               <h2 className="text-[13px] font-bold text-slate-500 uppercase tracking-wide mb-3.5">
                 Recent &amp; frequent
               </h2>
-              <div className="flex gap-5.5 flex-wrap justify-center sm:justify-start">
+              <div className="flex gap-5.5 flex-wrap">
                 {recentPayees.map((p) => (
                   <button
                     key={p.name}
