@@ -64,7 +64,7 @@ function ReviewInner() {
     <AppShell>
       <TopBar title="Review and send" backHref="/pay/details" />
 
-      <div className="p-8 md:p-10 pb-16 max-w-2xl">
+      <div className="p-4 sm:p-8 md:p-10 pb-16 max-w-2xl">
         <p className="text-sm text-slate-400 mb-1">Paying {service}</p>
         <div className="text-[32px] font-bold text-slate-900 mb-8">
           {formatKES(amount)}

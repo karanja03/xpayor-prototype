@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import type { ComponentType } from "react";
+import type { FunctionComponent } from "react";
 import {
   BankBuildingIcon,
   BoltIcon,
@@ -25,7 +25,7 @@ import {
 import { AppShell } from "@/components/AppShell";
 import { TopBar } from "@/components/TopBar";
 
-type IconComponent = ComponentType<{ className?: string }>;
+type IconComponent = FunctionComponent<{ className?: string }>;
 type IconResolver = (name: string) => IconComponent | undefined;
 
 function constIcon(Icon: IconComponent): IconResolver {
@@ -129,7 +129,7 @@ export default function PayToPage() {
     <AppShell>
       <TopBar title="Pay to" backHref="/" />
 
-      <div className="p-8 md:p-10 pb-16">
+      <div className="p-4 sm:p-8 md:p-10 pb-16">
         <h1 className="text-[22px] font-bold text-slate-900 mb-5">
           Who are you paying?
         </h1>

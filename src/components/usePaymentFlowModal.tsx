@@ -81,11 +81,11 @@ export function usePaymentFlowModal() {
 
   const modal = modalStep ? (
     <div
-      className="fixed inset-0 bg-slate-900/45 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-slate-900/45 flex items-end sm:items-center justify-center z-50"
       onClick={closeModal}
     >
       <div
-        className="bg-white rounded-2xl w-[420px] p-7 shadow-2xl"
+        className="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:w-[420px] p-6 sm:p-7 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {modalStep === "method" ? (

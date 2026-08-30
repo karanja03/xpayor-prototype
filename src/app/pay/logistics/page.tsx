@@ -21,7 +21,7 @@ export default function LogisticsAllPage() {
     <AppShell>
       <TopBar title="Logistics & Freight" backHref="/pay" />
 
-      <div className="p-8 md:p-10 pb-16">
+      <div className="p-4 sm:p-8 md:p-10 pb-16">
         <div className="relative mb-5 max-w-xl">
           <SearchIcon className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input

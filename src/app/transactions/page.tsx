@@ -46,7 +46,7 @@ export default function TransactionsPage() {
     <AppShell>
       <TopBar title="Transactions" backHref="/" />
 
-      <div className="p-8 md:p-10 pb-16">
+      <div className="p-4 sm:p-8 md:p-10 pb-16">
         <div className="flex items-center justify-between mb-5 gap-4 flex-wrap">
           <div className="relative w-full max-w-xs">
             <SearchIcon className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -66,7 +66,8 @@ export default function TransactionsPage() {
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden overflow-x-auto">
+        {/* Table - medium screens and up */}
+        <div className="hidden md:block bg-white border border-slate-200 rounded-xl overflow-hidden overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[860px]">
             <thead>
               <tr className="border-b border-slate-200">
@@ -130,15 +131,53 @@ export default function TransactionsPage() {
             </tbody>
           </table>
         </div>
+
+        {/* Cards - small screens */}
+        <div className="md:hidden flex flex-col gap-2.5">
+          {filtered.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setActive(t)}
+              className="bg-white border border-slate-200 rounded-xl p-4 text-left"
+            >
+              <div className="flex items-start justify-between gap-3 mb-2">
+                <div className="min-w-0">
+                  <div className="text-[13.5px] font-semibold text-slate-900 truncate">
+                    {t.service}
+                  </div>
+                  <div className="text-xs text-slate-400 truncate mt-0.5">{t.to}</div>
+                </div>
+                <div className="text-[13.5px] font-semibold text-slate-900 text-right shrink-0">
+                  {formatKES(t.amount)}
+                </div>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-xs text-slate-400 truncate">
+                  {t.reference} &middot; {formatDate(t.createdAt)}
+                </span>
+                <span
+                  className={`text-[10.5px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${statusStyles[t.status]}`}
+                >
+                  {t.status}
+                </span>
+              </div>
+            </button>
+          ))}
+          {filtered.length === 0 && (
+            <div className="bg-white border border-slate-200 rounded-xl px-5 py-10 text-center text-sm text-slate-400">
+              No transactions match that reference.
+            </div>
+          )}
+        </div>
       </div>
 
       {active && (
         <div
-          className="fixed inset-0 bg-slate-900/45 flex items-center justify-center z-50"
+          className="fixed inset-0 bg-slate-900/45 flex items-end sm:items-center justify-center z-50"
           onClick={() => setActive(null)}
         >
           <div
-            className="bg-white rounded-2xl w-[460px] max-h-[85vh] overflow-auto p-7 shadow-2xl"
+            className="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:w-[460px] max-h-[85vh] overflow-auto p-6 sm:p-7 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-1">

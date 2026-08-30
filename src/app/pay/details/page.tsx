@@ -12,6 +12,7 @@ import {
 } from "@/components/icons";
 import { paymentLabels } from "@/lib/data";
 import { addCustomLabel, getCustomLabels } from "@/lib/store";
+import { accounts, sourceAccountLabel } from "@/lib/accounts";
 
 type FieldConfig = { key: string; label: string; placeholder: string };
 
@@ -80,7 +81,7 @@ function PaymentFormInner() {
 
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
   const [amount, setAmount] = useState("");
-  const [sourceAccount, setSourceAccount] = useState("Product Testing B - KES 300.00");
+  const [sourceAccount, setSourceAccount] = useState(sourceAccountLabel(accounts[0]));
   const [saveBeneficiary, setSaveBeneficiary] = useState(false);
 
   const [customLabels, setCustomLabels] = useState<string[]>([]);
@@ -150,7 +151,7 @@ function PaymentFormInner() {
     <AppShell>
       <TopBar title={title} backHref="/pay" />
 
-      <div className="p-8 md:p-10 pb-16 max-w-2xl">
+      <div className="p-4 sm:p-8 md:p-10 pb-16 max-w-2xl">
         <div className="mb-6">
           <label className="block text-[13px] font-semibold text-slate-700 mb-2">
             Source Account
@@ -161,15 +162,15 @@ function PaymentFormInner() {
               onChange={(e) => setSourceAccount(e.target.value)}
               className="w-full appearance-none px-4 py-3 border border-slate-200 rounded-lg text-sm text-slate-900 bg-white outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
             >
-              <option>Product Testing B - KES 300.00</option>
-              <option>Operations - KES 1,204,500.00</option>
-              <option>Payroll - KES 82,000.00</option>
+              {accounts.map((a) => (
+                <option key={a.id}>{sourceAccountLabel(a)}</option>
+              ))}
             </select>
             <ChevronDownIcon className="w-4 h-4 text-slate-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           {fields.map((f) => (
             <div key={f.key}>
               <label className="block text-[13px] font-semibold text-brand-600 mb-2">

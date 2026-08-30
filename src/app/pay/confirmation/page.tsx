@@ -57,7 +57,7 @@ function ConfirmationInner() {
     <AppShell>
       <TopBar title="Pay to" />
 
-      <div className="p-8 md:p-10 pb-16 max-w-2xl">
+      <div className="p-4 sm:p-8 md:p-10 pb-16 max-w-2xl">
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-7 mb-7">
           <div className="flex items-start gap-4">
             <span className="w-11 h-11 rounded-full bg-amber-100 flex items-center justify-center shrink-0">

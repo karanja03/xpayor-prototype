@@ -1,11 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   HomeIcon,
-  TasksIcon,
   TransactionsIcon,
   StatementsIcon,
   ReimbursementsIcon,
@@ -14,12 +12,13 @@ import {
   SettingsIcon,
   ChevronDownIcon,
 } from "./icons";
-import { getTransactions } from "@/lib/store";
 
 const navItems = [
   { key: "home", label: "Home", href: "/", icon: HomeIcon },
-  { key: "tasks", label: "Tasks", href: "/tasks", icon: TasksIcon, badge: true },
-  { key: "transactions", label: "Transactions", href: "/transactions", icon: TransactionsIcon },
+  // "Tasks" (an approval queue) is an Approver-side concept. This user is an
+  // Initiator, so the equivalent nav item is a read-only activity feed of
+  // payments they've submitted and their status - not an action queue.
+  { key: "activity", label: "Activity", href: "/transactions", icon: TransactionsIcon },
   { key: "statements", label: "Statements", icon: StatementsIcon },
   { key: "reimbursements", label: "Reimbursements", icon: ReimbursementsIcon },
   { key: "beneficiaries", label: "Beneficiaries", icon: BeneficiariesIcon },
@@ -27,16 +26,11 @@ const navItems = [
   { key: "settings", label: "Settings", icon: SettingsIcon },
 ];
 
-export function Sidebar() {
+export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
-  const [pendingCount, setPendingCount] = useState(0);
-
-  useEffect(() => {
-    setPendingCount(getTransactions().filter((t) => t.status === "Pending").length);
-  }, [pathname]);
 
   return (
-    <aside className="w-[232px] shrink-0 border-r border-slate-200 bg-white flex flex-col p-3">
+    <aside className="w-[232px] shrink-0 h-full border-r border-slate-200 bg-white flex flex-col p-3">
       <div className="flex items-center gap-2.5 px-2 pb-4 mb-3 border-b border-slate-100">
         <div className="w-8 h-8 rounded-[9px] bg-brand-600 text-white flex items-center justify-center text-xs font-bold shrink-0">
           ETL
@@ -61,14 +55,14 @@ export function Sidebar() {
 
           if (item.href) {
             return (
-              <Link key={item.key} href={item.href} className={rowClasses}>
+              <Link
+                key={item.key}
+                href={item.href}
+                onClick={onNavigate}
+                className={rowClasses}
+              >
                 <Icon className="w-[18px] h-[18px]" />
                 <span>{item.label}</span>
-                {item.badge && pendingCount > 0 && (
-                  <span className="ml-auto min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
-                    {pendingCount}
-                  </span>
-                )}
               </Link>
             );
           }
