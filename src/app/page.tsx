@@ -38,7 +38,7 @@ export default function HomePage() {
     <AppShell>
       <TopBar title="Home" showPay />
 
-      <div className="p-4 sm:p-8 md:p-10">
+      <div className="p-4 sm:p-8 md:p-10 max-w-4xl mx-auto">
         <div className="mb-7">
           <h1 className="text-[21px] font-bold text-slate-900">
             Welcome, Wambui

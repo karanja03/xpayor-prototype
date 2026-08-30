@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { FunctionComponent } from "react";
 import {
+  ArrowRightIcon,
   BankBuildingIcon,
   BoltIcon,
   GlobeIcon,
@@ -73,13 +74,29 @@ function Tile({
   );
 }
 
+function ViewAllTile({ href, count }: { href: string; count: number }) {
+  return (
+    <Link
+      href={href}
+      className="flex flex-col items-center justify-center gap-2 w-[148px] px-2.5 py-4 border border-dashed border-slate-300 rounded-xl bg-white hover:border-brand-500 hover:bg-brand-50/40 transition-colors text-center"
+    >
+      <div className="w-11 h-11 rounded-[11px] bg-slate-100 text-slate-500 flex items-center justify-center">
+        <ArrowRightIcon className="w-5 h-5" />
+      </div>
+      <div className="text-[12.5px] font-semibold text-brand-600 leading-tight">
+        View all {count}
+      </div>
+    </Link>
+  );
+}
+
 function CategorySection({
   title,
   items,
   onTileClick,
   icon,
   viewAllHref,
-  viewAllLabel,
+  viewAllCount,
   last = false,
 }: {
   title: string;
@@ -87,28 +104,21 @@ function CategorySection({
   onTileClick: (name: string) => void;
   icon?: IconResolver;
   viewAllHref?: string;
-  viewAllLabel?: string;
+  viewAllCount?: number;
   last?: boolean;
 }) {
   return (
     <section className={last ? "" : "mb-8"}>
-      <div className="flex items-center justify-between mb-3.5">
-        <h2 className="text-[13px] font-bold text-slate-500 uppercase tracking-wide">
-          {title}
-        </h2>
-        {viewAllHref && (
-          <Link
-            href={viewAllHref}
-            className="text-[12.5px] font-semibold text-brand-600 hover:text-brand-700"
-          >
-            {viewAllLabel}
-          </Link>
-        )}
-      </div>
-      <div className="flex flex-wrap gap-3">
+      <h2 className="text-[13px] font-bold text-slate-500 uppercase tracking-wide mb-3.5">
+        {title}
+      </h2>
+      <div className="flex flex-wrap justify-center sm:justify-start gap-3">
         {items.map((p) => (
           <Tile key={p.name} payee={p} onClick={() => onTileClick(p.name)} icon={icon} />
         ))}
+        {viewAllHref && viewAllCount && (
+          <ViewAllTile href={viewAllHref} count={viewAllCount} />
+        )}
       </div>
     </section>
   );
@@ -129,7 +139,7 @@ export default function PayToPage() {
     <AppShell>
       <TopBar title="Pay to" backHref="/" />
 
-      <div className="p-4 sm:p-8 md:p-10 pb-16">
+      <div className="p-4 sm:p-8 md:p-10 pb-16 max-w-4xl mx-auto">
         <h1 className="text-[22px] font-bold text-slate-900 mb-5">
           Who are you paying?
         </h1>
@@ -185,7 +195,7 @@ export default function PayToPage() {
               <h2 className="text-[13px] font-bold text-slate-500 uppercase tracking-wide mb-3.5">
                 Recent &amp; frequent
               </h2>
-              <div className="flex gap-5.5 flex-wrap">
+              <div className="flex gap-5.5 flex-wrap justify-center sm:justify-start">
                 {recentPayees.map((p) => (
                   <button
                     key={p.name}
@@ -219,7 +229,7 @@ export default function PayToPage() {
               onTileClick={openFor}
               icon={constIcon(ShipIcon)}
               viewAllHref="/pay/logistics"
-              viewAllLabel="View all 32 →"
+              viewAllCount={32}
             />
             <CategorySection
               title="Direct Transfers"

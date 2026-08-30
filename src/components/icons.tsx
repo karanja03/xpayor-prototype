@@ -271,6 +271,61 @@ export function UploadCloudIcon({ className = "" }: IconProps) {
   );
 }
 
+export function PhoneIcon({ className = "" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" className={`${base} ${className}`}>
+      <path d="M6.5 3.5h3L11 8l-2 1.5a10 10 0 0 0 5.5 5.5L16 13l4.5 1.5v3a2 2 0 0 1-2.2 2A17 17 0 0 1 4.5 5.7a2 2 0 0 1 2-2.2Z" />
+    </svg>
+  );
+}
+
+export function ReceiptIcon({ className = "" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" className={`${base} ${className}`}>
+      <path d="M6 3h12v17.5l-2-1.3-2 1.3-2-1.3-2 1.3-2-1.3-2 1.3V3Z" />
+      <line x1="8.5" y1="8" x2="15.5" y2="8" />
+      <line x1="8.5" y1="12" x2="15.5" y2="12" />
+    </svg>
+  );
+}
+
+export function StorefrontIcon({ className = "" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" className={`${base} ${className}`}>
+      <path d="M4 4h16l1.5 5a2.5 2.5 0 0 1-4.9.7A2.5 2.5 0 0 1 12 11a2.5 2.5 0 0 1-4.6-1.3A2.5 2.5 0 0 1 2.5 9Z" />
+      <path d="M5 10.5V20h14v-9.5" />
+      <path d="M10 20v-5h4v5" />
+    </svg>
+  );
+}
+
+export function ArrowRightIcon({ className = "" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={`${base} ${className}`}>
+      <line x1="4" y1="12" x2="20" y2="12" />
+      <polyline points="14 6 20 12 14 18" />
+    </svg>
+  );
+}
+
+export function FilterIcon({ className = "" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className={`${base} ${className}`}>
+      <polygon points="4 4 20 4 14 12.5 14 19 10 21 10 12.5 4 4" />
+    </svg>
+  );
+}
+
+export function DownloadIcon({ className = "" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className={`${base} ${className}`}>
+      <line x1="12" y1="3" x2="12" y2="14" />
+      <polyline points="7.5 10 12 14.5 16.5 10" />
+      <path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" />
+    </svg>
+  );
+}
+
 export function UserIcon({ className = "" }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={`${base} ${className}`}>

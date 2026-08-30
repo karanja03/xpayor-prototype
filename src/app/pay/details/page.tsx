@@ -88,6 +88,7 @@ function PaymentFormInner() {
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState<"KES" | "USD">("KES");
   const [sourceAccount, setSourceAccount] = useState(sourceAccountLabel(accounts[0]));
+  const [sourceOpen, setSourceOpen] = useState(false);
   const [saveBeneficiary, setSaveBeneficiary] = useState(false);
 
   const [customLabels, setCustomLabels] = useState<string[]>([]);
@@ -173,23 +174,46 @@ function PaymentFormInner() {
     <AppShell>
       <TopBar title={title} backHref="/pay" />
 
-      <div className="p-4 sm:p-8 md:p-10 pb-16 max-w-2xl">
-        <div className="mb-6">
+      <div className="p-4 sm:p-8 md:p-10 pb-16 max-w-2xl mx-auto">
+        <div className="mb-6 relative">
           <label className="block text-[13px] font-semibold text-slate-700 mb-2">
             Source Account
           </label>
-          <div className="relative">
-            <select
-              value={sourceAccount}
-              onChange={(e) => setSourceAccount(e.target.value)}
-              className="w-full appearance-none px-4 py-3 border border-slate-200 rounded-lg text-sm text-slate-900 bg-white outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
-            >
-              {accounts.map((a) => (
-                <option key={a.id}>{sourceAccountLabel(a)}</option>
-              ))}
-            </select>
-            <ChevronDownIcon className="w-4 h-4 text-slate-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
-          </div>
+          <button
+            type="button"
+            onClick={() => setSourceOpen((v) => !v)}
+            className="w-full flex items-center justify-between px-4 py-3 border border-slate-200 rounded-lg text-sm text-slate-900 bg-white outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+          >
+            <span>{sourceAccount}</span>
+            <ChevronDownIcon
+              className={`w-4 h-4 text-slate-400 shrink-0 transition-transform ${sourceOpen ? "rotate-180" : ""}`}
+            />
+          </button>
+          {sourceOpen && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setSourceOpen(false)} />
+              <div className="absolute z-50 mt-1.5 w-full bg-white border border-slate-200 rounded-lg shadow-lg py-1.5">
+                {accounts.map((a) => {
+                  const label = sourceAccountLabel(a);
+                  return (
+                    <button
+                      key={a.id}
+                      type="button"
+                      onClick={() => {
+                        setSourceAccount(label);
+                        setSourceOpen(false);
+                      }}
+                      className={`w-full text-left px-3.5 py-2.5 text-sm hover:bg-slate-50 ${
+                        label === sourceAccount ? "font-semibold text-brand-600" : "text-slate-900"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </div>
 
         <div className="mb-6">
