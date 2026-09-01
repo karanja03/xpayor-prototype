@@ -24,6 +24,7 @@ function methodName(method: string) {
   if (method === "intl") return "International Transfer";
   if (method === "business") return "Business Payment";
   if (method === "government") return "Government Payment";
+  if (method === "utility") return "Bill Payment";
   if (method === "internal") return "Internal Transfer";
   return "International Transfer";
 }
@@ -64,7 +65,7 @@ function getFields(method: string, type: string): FieldConfig[] {
       { key: "swift", label: "SWIFT / BIC Code", placeholder: "e.g. NWBKGB2L" },
     ];
   }
-  if (method === "business" || method === "government" || method === "internal") {
+  if (method === "business" || method === "government" || method === "utility" || method === "internal") {
     // Direct wallet-to-wallet payments - the recipient's account details are
     // already on file, so there's nothing extra to collect beyond amount.
     return [];

@@ -35,9 +35,10 @@ function ReviewInner() {
   const service = mode === "batch" ? "Batch File Upload" : serviceLabelFor(method, type);
   // For direct wallet-to-wallet payments (business/government/internal) the
   // recipient name is more meaningful here than the generic method label.
-  const headline = payee && (method === "business" || method === "government" || method === "internal")
-    ? payee
-    : service;
+  const headline =
+    payee && (method === "business" || method === "government" || method === "utility" || method === "internal")
+      ? payee
+      : service;
   const amount = Number(amountRaw) || 0;
   // Prefer a named recipient, then whatever the payment was labelled, and only
   // fall back to the channel name when neither is known - repeating the

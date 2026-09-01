@@ -11,11 +11,19 @@ import {
   StorefrontIcon,
 } from "./icons";
 import { accounts } from "@/lib/accounts";
-import { governmentPayees, logisticsAll, logisticsShown } from "@/lib/data";
+import { governmentPayees, logisticsAll, logisticsShown, utilityPayees } from "@/lib/data";
 
 type IconComponent = ComponentType<{ className?: string }>;
 
-export type Method = "mpesa" | "airtel" | "bank" | "intl" | "business" | "government" | "internal";
+export type Method =
+  | "mpesa"
+  | "airtel"
+  | "bank"
+  | "intl"
+  | "business"
+  | "government"
+  | "utility"
+  | "internal";
 
 export const directMethodMap: Record<string, Method> = {
   "M-Pesa": "mpesa",
@@ -24,15 +32,19 @@ export const directMethodMap: Record<string, Method> = {
   "Int'l Transfer": "intl",
 };
 
-// Government entities (eCitizen, KRA, ...) and B2B businesses (Swissport, ...)
-// are both direct wallet-to-wallet payments on the backend today - selecting
-// one should go straight to details, the same as Bank/Int'l Transfer, never
-// through the M-Pesa/Airtel method+type picker below.
+// Government entities (eCitizen, KRA, ...), B2B businesses (Swissport, ...),
+// and utility billers (KPLC, Nairobi Water, ...) are all direct wallet-to-wallet
+// payments on the backend today - selecting one should go straight to details,
+// the same as Bank/Int'l Transfer, never through the M-Pesa/Airtel method+type
+// picker below.
 function isGovernmentPayee(name: string) {
   return governmentPayees.some((p) => p.name === name);
 }
 function isB2BPayee(name: string) {
   return logisticsShown.some((p) => p.name === name) || logisticsAll.some((p) => p.name === name);
+}
+function isUtilityPayee(name: string) {
+  return utilityPayees.some((p) => p.name === name);
 }
 
 const methodChoices: { key: Method; label: string; sub: string; icon: IconComponent }[] = [
@@ -82,9 +94,10 @@ export function usePaymentFlowModal() {
       return;
     }
 
-    // Government services and B2B businesses are direct, single-step
-    // payments - selecting one goes straight to the details page, the same
-    // as Bank/Int'l Transfer above, with no M-Pesa/Airtel picker in between.
+    // Government services, B2B businesses, and utility billers are all
+    // direct, single-step payments - selecting one goes straight to the
+    // details page, the same as Bank/Int'l Transfer above, with no
+    // M-Pesa/Airtel picker in between.
     if (isGovernmentPayee(name)) {
       goToDetails("government", undefined, name);
       return;
@@ -93,9 +106,11 @@ export function usePaymentFlowModal() {
       goToDetails("business", undefined, name);
       return;
     }
+    if (isUtilityPayee(name)) {
+      goToDetails("utility", undefined, name);
+      return;
+    }
 
-    // Everything else (utility billers) still goes through the method
-    // picker below, since those are commonly paid via Paybill/Bank.
     setPayee(name);
     setMethod(undefined);
     setModalStep("method");
