@@ -10,6 +10,7 @@ import {
   GlobeIcon,
   GovBuildingIcon,
   MobileMoneyIcon,
+  RefreshIcon,
   SearchIcon,
   ShipIcon,
 } from "@/components/icons";
@@ -37,6 +38,7 @@ function directTransferIcon(name: string): IconComponent | undefined {
   if (name === "M-Pesa" || name === "Airtel Money") return MobileMoneyIcon;
   if (name === "Bank Transfer") return BankBuildingIcon;
   if (name === "Int'l Transfer") return GlobeIcon;
+  if (name === "Internal Transfer") return RefreshIcon;
   return undefined;
 }
 

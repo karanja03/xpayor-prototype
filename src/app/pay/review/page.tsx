@@ -33,6 +33,11 @@ function ReviewInner() {
   const saveBen = params.get("saveBen") === "1";
 
   const service = mode === "batch" ? "Batch File Upload" : serviceLabelFor(method, type);
+  // For direct wallet-to-wallet payments (business/government/internal) the
+  // recipient name is more meaningful here than the generic method label.
+  const headline = payee && (method === "business" || method === "government" || method === "internal")
+    ? payee
+    : service;
   const amount = Number(amountRaw) || 0;
   // Prefer a named recipient, then whatever the payment was labelled, and only
   // fall back to the channel name when neither is known - repeating the
@@ -71,7 +76,7 @@ function ReviewInner() {
       <TopBar title="Review and send" backHref="/pay/details" />
 
       <div className="p-4 sm:p-8 md:p-10 pb-16 max-w-2xl mx-auto">
-        <p className="text-sm text-slate-400 mb-1">Paying {service}</p>
+        <p className="text-sm text-slate-400 mb-1">Paying {headline}</p>
         <div className="text-[32px] font-bold text-slate-900 mb-8">
           {mode === "batch" ? reference : formatMoney(amount, currency)}
         </div>

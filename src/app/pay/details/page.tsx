@@ -21,6 +21,10 @@ function methodName(method: string) {
   if (method === "mpesa") return "M-Pesa";
   if (method === "airtel") return "Airtel Money";
   if (method === "bank") return "Bank Transfer";
+  if (method === "intl") return "International Transfer";
+  if (method === "business") return "Business Payment";
+  if (method === "government") return "Government Payment";
+  if (method === "internal") return "Internal Transfer";
   return "International Transfer";
 }
 
@@ -60,6 +64,11 @@ function getFields(method: string, type: string): FieldConfig[] {
       { key: "swift", label: "SWIFT / BIC Code", placeholder: "e.g. NWBKGB2L" },
     ];
   }
+  if (method === "business" || method === "government" || method === "internal") {
+    // Direct wallet-to-wallet payments - the recipient's account details are
+    // already on file, so there's nothing extra to collect beyond amount.
+    return [];
+  }
   return [{ key: "phone", label: "Phone Number", placeholder: "07XX XXX XXX" }];
 }
 
@@ -78,7 +87,17 @@ function PaymentFormInner() {
 
   const fields = useMemo(() => getFields(method, type), [method, type]);
   const service = serviceLabelFor(method, type);
-  const title = payee ? `Pay ${payee}` : `Pay ${service}`;
+  const title =
+    method === "internal" && payee
+      ? `Transfer to ${payee}`
+      : payee
+        ? `Pay ${payee}`
+        : `Pay ${service}`;
+
+  const availableSourceAccounts = useMemo(
+    () => (method === "internal" && payee ? accounts.filter((a) => a.name !== payee) : accounts),
+    [method, payee]
+  );
 
   const [batchMode, setBatchMode] = useState<"single" | "batch">("single");
   const [batchFileName, setBatchFileName] = useState<string | null>(null);
@@ -87,7 +106,9 @@ function PaymentFormInner() {
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState<"KES" | "USD">("KES");
-  const [sourceAccount, setSourceAccount] = useState(sourceAccountLabel(accounts[0]));
+  const [sourceAccount, setSourceAccount] = useState(() =>
+    sourceAccountLabel(availableSourceAccounts[0] ?? accounts[0])
+  );
   const [sourceOpen, setSourceOpen] = useState(false);
   const [saveBeneficiary, setSaveBeneficiary] = useState(false);
 
@@ -193,7 +214,7 @@ function PaymentFormInner() {
             <>
               <div className="fixed inset-0 z-40" onClick={() => setSourceOpen(false)} />
               <div className="absolute z-50 mt-1.5 w-full bg-white border border-slate-200 rounded-lg shadow-lg py-1.5">
-                {accounts.map((a) => {
+                {availableSourceAccounts.map((a) => {
                   const label = sourceAccountLabel(a);
                   return (
                     <button

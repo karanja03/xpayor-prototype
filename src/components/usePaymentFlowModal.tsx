@@ -10,10 +10,12 @@ import {
   ReceiptIcon,
   StorefrontIcon,
 } from "./icons";
+import { accounts } from "@/lib/accounts";
+import { governmentPayees, logisticsAll, logisticsShown } from "@/lib/data";
 
 type IconComponent = ComponentType<{ className?: string }>;
 
-export type Method = "mpesa" | "airtel" | "bank" | "intl";
+export type Method = "mpesa" | "airtel" | "bank" | "intl" | "business" | "government" | "internal";
 
 export const directMethodMap: Record<string, Method> = {
   "M-Pesa": "mpesa",
@@ -21,6 +23,17 @@ export const directMethodMap: Record<string, Method> = {
   "Bank Transfer": "bank",
   "Int'l Transfer": "intl",
 };
+
+// Government entities (eCitizen, KRA, ...) and B2B businesses (Swissport, ...)
+// are both direct wallet-to-wallet payments on the backend today - selecting
+// one should go straight to details, the same as Bank/Int'l Transfer, never
+// through the M-Pesa/Airtel method+type picker below.
+function isGovernmentPayee(name: string) {
+  return governmentPayees.some((p) => p.name === name);
+}
+function isB2BPayee(name: string) {
+  return logisticsShown.some((p) => p.name === name) || logisticsAll.some((p) => p.name === name);
+}
 
 const methodChoices: { key: Method; label: string; sub: string; icon: IconComponent }[] = [
   { key: "mpesa", label: "M-Pesa", sub: "Mobile money", icon: MobileMoneyIcon },
@@ -36,7 +49,7 @@ const typeChoices = [
 
 export function usePaymentFlowModal() {
   const router = useRouter();
-  const [modalStep, setModalStep] = useState<"method" | "type" | null>(null);
+  const [modalStep, setModalStep] = useState<"method" | "type" | "internalWallet" | null>(null);
   const [payee, setPayee] = useState<string | undefined>(undefined);
   const [method, setMethod] = useState<Method | undefined>(undefined);
   const [type, setType] = useState<(typeof typeChoices)[number]["key"]>("mobile");
@@ -50,6 +63,12 @@ export function usePaymentFlowModal() {
   }
 
   function openFor(name: string) {
+    if (name === "Internal Transfer") {
+      setPayee(undefined);
+      setModalStep("internalWallet");
+      return;
+    }
+
     const directMethod = directMethodMap[name];
     if (directMethod === "bank" || directMethod === "intl") {
       goToDetails(directMethod);
@@ -62,9 +81,29 @@ export function usePaymentFlowModal() {
       setModalStep("type");
       return;
     }
+
+    // Government services and B2B businesses are direct, single-step
+    // payments - selecting one goes straight to the details page, the same
+    // as Bank/Int'l Transfer above, with no M-Pesa/Airtel picker in between.
+    if (isGovernmentPayee(name)) {
+      goToDetails("government", undefined, name);
+      return;
+    }
+    if (isB2BPayee(name)) {
+      goToDetails("business", undefined, name);
+      return;
+    }
+
+    // Everything else (utility billers) still goes through the method
+    // picker below, since those are commonly paid via Paybill/Bank.
     setPayee(name);
     setMethod(undefined);
     setModalStep("method");
+  }
+
+  function pickInternalWallet(walletName: string) {
+    setModalStep(null);
+    goToDetails("internal", undefined, walletName);
   }
 
   function closeModal() {
@@ -138,6 +177,42 @@ export function usePaymentFlowModal() {
                   </button>
                 );
               })}
+            </div>
+          </>
+        ) : modalStep === "internalWallet" ? (
+          <>
+            <div className="flex items-center justify-between mb-1.5">
+              <h3 className="text-[17px] font-bold text-slate-900">Transfer To</h3>
+              <button
+                onClick={closeModal}
+                className="w-5 h-5 text-slate-400 hover:text-slate-600"
+              >
+                <CloseIcon className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="text-[13px] text-slate-400 mb-5">
+              Select the wallet you want to pay
+            </p>
+            <div className="flex flex-col gap-2.5">
+              {accounts.map((a) => (
+                <button
+                  key={a.id}
+                  onClick={() => pickInternalWallet(a.name)}
+                  className="flex items-center gap-3 px-4 py-3.5 rounded-lg border-[1.5px] border-slate-200 bg-white hover:border-brand-500 hover:bg-brand-50/40 text-left transition-colors"
+                >
+                  <span className="w-9 h-9 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
+                    <BankBuildingIcon className="w-[18px] h-[18px]" />
+                  </span>
+                  <span>
+                    <span className="block text-sm font-semibold text-slate-900">
+                      {a.name}
+                    </span>
+                    <span className="block text-xs text-slate-400 mt-0.5">
+                      {a.category} &middot; {a.masked}
+                    </span>
+                  </span>
+                </button>
+              ))}
             </div>
           </>
         ) : (

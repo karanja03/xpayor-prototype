@@ -85,6 +85,7 @@ export const directTransfers: Payee[] = [
   { name: "Airtel Money", initials: "A", bg: "bg-red-50", fg: "text-red-600" },
   { name: "Bank Transfer", initials: "B", bg: "bg-blue-50", fg: "text-blue-700" },
   { name: "Int'l Transfer", initials: "IT", bg: "bg-blue-50", fg: "text-blue-700" },
+  { name: "Internal Transfer", initials: "IN", bg: "bg-purple-50", fg: "text-purple-700" },
 ];
 
 export const utilityPayees: Payee[] = [
