@@ -3,10 +3,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { TopBar } from "@/components/TopBar";
-import { CloseIcon, DownloadIcon, FilterIcon, SearchIcon } from "@/components/icons";
+import {
+  ArrowUpCircleIcon,
+  CloseIcon,
+  DownloadIcon,
+  FilterIcon,
+  SearchIcon,
+} from "@/components/icons";
 import { TransactionDetailsModal } from "@/components/TransactionDetailsModal";
 import {
   getTransactions,
+  isCreditTransaction,
   updateTransactionStatus,
   type Transaction,
   type TxStatus,
@@ -21,6 +28,38 @@ const statusStyles: Record<TxStatus, string> = {
 };
 
 const dateRanges = ["All Time", "Today", "This Week", "This Month"] as const;
+
+function AmountCell({ t }: { t: Transaction }) {
+  const credit = isCreditTransaction(t.service);
+  const cancelled = t.status === "Cancelled";
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span
+        className={`w-4.5 h-4.5 rounded-full flex items-center justify-center shrink-0 ${
+          cancelled
+            ? "bg-slate-100 text-slate-400"
+            : credit
+              ? "bg-green-100 text-green-600"
+              : "bg-blue-100 text-blue-600"
+        }`}
+      >
+        <ArrowUpCircleIcon className={`w-2.5 h-2.5 ${credit ? "rotate-180" : ""}`} />
+      </span>
+      <span className={cancelled ? "line-through text-slate-400" : ""}>
+        {formatMoney(t.amount, t.currency)}
+      </span>
+    </span>
+  );
+}
+
+function DescriptionCell({ t }: { t: Transaction }) {
+  return (
+    <div className="min-w-0">
+      <div className="truncate">{t.description || t.label}</div>
+      <div className="text-slate-400 font-normal truncate">{t.to}</div>
+    </div>
+  );
+}
 
 function inRange(iso: string, range: (typeof dateRanges)[number]) {
   if (range === "All Time") return true;
@@ -139,7 +178,7 @@ export default function TransactionsPage() {
             </button>
           </div>
           <div className="text-[13.5px] font-semibold text-slate-500">
-            Amount: <span className="text-slate-900">{formatKES(total)}</span>{" "}
+            Total Amount: <span className="text-slate-900">{formatKES(total)}</span>{" "}
             <span className="text-slate-400 font-normal">
               ({filtered.length} total)
             </span>
@@ -151,10 +190,10 @@ export default function TransactionsPage() {
           <table className="w-full text-left border-collapse min-w-[860px]">
             <thead>
               <tr className="border-b border-slate-200">
-                {["To", "Service", "Reference", "Amount", "Date", "Status", ""].map((h) => (
+                {["Service", "Reference", "Amount", "Description", "Date", "Status", ""].map((h) => (
                   <th
                     key={h}
-                    className="px-5 py-3 text-[11.5px] font-bold text-slate-400 uppercase tracking-wide"
+                    className="px-5 py-3 text-[11px] font-bold text-slate-400 uppercase tracking-wide"
                   >
                     {h}
                   </th>
@@ -168,22 +207,22 @@ export default function TransactionsPage() {
                   className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50 cursor-pointer"
                   onClick={() => setActive(t)}
                 >
-                  <td className="px-5 py-3.5 text-[13.5px] font-semibold text-slate-900">
-                    {t.to}
-                  </td>
-                  <td className="px-5 py-3.5 text-[13.5px] text-slate-500">{t.service}</td>
-                  <td className="px-5 py-3.5 text-[13.5px] text-slate-600">
+                  <td className="px-5 py-3.5 text-[13px] text-slate-500">{t.service}</td>
+                  <td className="px-5 py-3.5 text-[13px] text-slate-600">
                     {t.reference}
                   </td>
-                  <td className="px-5 py-3.5 text-[13.5px] font-semibold text-slate-900">
-                    {formatMoney(t.amount, t.currency)}
+                  <td className="px-5 py-3.5 text-[13px] font-semibold text-slate-900">
+                    <AmountCell t={t} />
                   </td>
-                  <td className="px-5 py-3.5 text-[13.5px] text-slate-400">
+                  <td className="px-5 py-3.5 text-[13px] font-semibold text-slate-900 max-w-[220px]">
+                    <DescriptionCell t={t} />
+                  </td>
+                  <td className="px-5 py-3.5 text-[13px] text-slate-400">
                     {formatDate(t.createdAt)}
                   </td>
                   <td className="px-5 py-3.5">
                     <span
-                      className={`text-[11.5px] font-semibold px-2.5 py-1 rounded-full ${statusStyles[t.status]}`}
+                      className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${statusStyles[t.status]}`}
                     >
                       {t.status}
                     </span>
@@ -194,7 +233,7 @@ export default function TransactionsPage() {
                         e.stopPropagation();
                         setActive(t);
                       }}
-                      className="text-[13px] font-semibold text-brand-600 hover:text-brand-700"
+                      className="text-[12.5px] font-semibold text-brand-600 hover:text-brand-700"
                     >
                       View
                     </button>
@@ -222,13 +261,15 @@ export default function TransactionsPage() {
             >
               <div className="flex items-start justify-between gap-3 mb-2">
                 <div className="min-w-0">
-                  <div className="text-[13.5px] font-semibold text-slate-900 truncate">
-                    {t.to}
+                  <div className="text-[13px] font-semibold text-slate-900 truncate">
+                    {t.description || t.label}
                   </div>
-                  <div className="text-xs text-slate-400 truncate mt-0.5">{t.service}</div>
+                  <div className="text-xs text-slate-400 truncate mt-0.5">
+                    {t.to} &middot; {t.service}
+                  </div>
                 </div>
-                <div className="text-[13.5px] font-semibold text-slate-900 text-right shrink-0">
-                  {formatMoney(t.amount, t.currency)}
+                <div className="text-[13px] font-semibold text-slate-900 text-right shrink-0">
+                  <AmountCell t={t} />
                 </div>
               </div>
               <div className="flex items-center justify-between gap-3">

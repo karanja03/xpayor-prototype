@@ -1,9 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { CloseIcon } from "./icons";
-import { formatDateTime, formatMoney } from "@/lib/format";
-import type { Transaction, TxStatus } from "@/lib/store";
+import {
+  ArrowUpCircleIcon,
+  AttachmentIcon,
+  CloseIcon,
+  DownloadIcon,
+  InfoIcon,
+  TruckIcon,
+  UploadCloudIcon,
+  UserIcon,
+} from "./icons";
+import { formatDateTimeLong, formatMoney } from "@/lib/format";
+import { isCreditTransaction, type Transaction, type TxStatus } from "@/lib/store";
 
 const statusStyles: Record<TxStatus, string> = {
   Pending: "bg-amber-50 text-amber-800",
@@ -11,6 +20,63 @@ const statusStyles: Record<TxStatus, string> = {
   Cancelled: "bg-slate-100 text-slate-500",
   Failed: "bg-red-50 text-red-700",
 };
+
+function Row({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between py-2.5">
+      <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">
+        {label}
+      </span>
+      <span className="text-[13px] font-semibold text-slate-900 text-right">{value}</span>
+    </div>
+  );
+}
+
+function SectionHeading({
+  icon: Icon,
+  children,
+}: {
+  icon: (props: { className?: string }) => React.ReactElement;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center gap-1.5 mb-1">
+      <Icon className="w-3.5 h-3.5 text-slate-400" />
+      <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">
+        {children}
+      </h4>
+    </div>
+  );
+}
+
+function downloadReceipt(transaction: Transaction) {
+  const lines = [
+    "XPAYOR TRANSACTION RECEIPT",
+    "",
+    `Reference: ${transaction.id}`,
+    `Service: ${transaction.service}`,
+    `Amount: ${formatMoney(transaction.amount, transaction.currency)}`,
+    `Status: ${transaction.status}`,
+    `From Account: ${transaction.fromAccount}`,
+    `To: ${transaction.to}`,
+    `Created By: ${transaction.createdBy} on ${formatDateTimeLong(transaction.createdAt)}`,
+    transaction.approvedBy
+      ? `Approved By: ${transaction.approvedBy} on ${formatDateTimeLong(transaction.approvedAt ?? transaction.createdAt)}`
+      : null,
+    transaction.completedAt ? `Completed At: ${formatDateTimeLong(transaction.completedAt)}` : null,
+    transaction.externalReference ? `External Reference: ${transaction.externalReference}` : null,
+    transaction.receiverName ? `Receiver Name: ${transaction.receiverName}` : null,
+    transaction.description ? `Description: ${transaction.description}` : null,
+  ].filter(Boolean);
+
+  const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `xpayor-receipt-${transaction.id}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 export function TransactionDetailsModal({
   transaction,
@@ -22,6 +88,11 @@ export function TransactionDetailsModal({
   onRecall: (id: string) => void;
 }) {
   const [confirmingRecall, setConfirmingRecall] = useState(false);
+  const [receiptFileName, setReceiptFileName] = useState<string | null>(null);
+
+  const credit = isCreditTransaction(transaction.service);
+  const hasFulfillment =
+    transaction.externalReference || transaction.receiverName || transaction.description;
 
   return (
     <div
@@ -61,8 +132,9 @@ export function TransactionDetailsModal({
           </div>
         ) : (
           <>
-            <div className="flex items-center justify-between mb-1">
-              <h3 className="text-[17px] font-bold text-slate-900">
+            <div className="flex items-center gap-1.5 mb-3">
+              <InfoIcon className="w-4 h-4 text-brand-600" />
+              <h3 className="text-[17px] font-bold text-slate-900 flex-1">
                 Transaction Details
               </h3>
               <button
@@ -73,75 +145,120 @@ export function TransactionDetailsModal({
                 <CloseIcon className="w-4 h-4" />
               </button>
             </div>
-            <p className="text-[12.5px] text-slate-400 mb-5">{transaction.id}</p>
+
+            <div className="flex items-center justify-between mb-5">
+              <p className="text-[12px] text-slate-400 tracking-wide">{transaction.id}</p>
+              <button
+                onClick={() => downloadReceipt(transaction)}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 border border-slate-200 rounded-lg text-[11.5px] font-semibold text-slate-600 bg-white hover:bg-slate-50"
+              >
+                <DownloadIcon className="w-3 h-3" />
+                Download Transaction Receipt
+              </button>
+            </div>
 
             <div className="bg-brand-50 rounded-xl p-4 mb-5">
               <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">
                 Amount
               </div>
-              <div className="text-xl font-bold text-slate-900">
-                {formatMoney(transaction.amount, transaction.currency)}
+              <div className="flex items-center gap-2">
+                <span
+                  className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${
+                    credit ? "bg-green-100 text-green-600" : "bg-blue-100 text-blue-600"
+                  }`}
+                >
+                  <ArrowUpCircleIcon
+                    className={`w-3.5 h-3.5 ${credit ? "rotate-180" : ""}`}
+                  />
+                </span>
+                <div className="text-xl font-bold text-slate-900">
+                  {formatMoney(transaction.amount, transaction.currency)}
+                </div>
               </div>
             </div>
 
-            <h4 className="text-[12.5px] font-bold text-slate-500 uppercase tracking-wide mb-1">
-              Transaction Information
-            </h4>
+            <SectionHeading icon={InfoIcon}>Transaction Information</SectionHeading>
+            <div className="divide-y divide-slate-100 mb-5">
+              <Row label="Service" value={transaction.service} />
+              <Row label="Reference" value={transaction.reference} />
+              <Row
+                label="Status"
+                value={
+                  <span
+                    className={`text-[11.5px] font-semibold px-2.5 py-1 rounded-full ${statusStyles[transaction.status]}`}
+                  >
+                    {transaction.status}
+                  </span>
+                }
+              />
+              {transaction.completedAt && (
+                <Row label="Completed At" value={formatDateTimeLong(transaction.completedAt)} />
+              )}
+              <Row label="From Account" value={transaction.fromAccount} />
+              <Row label="To" value={transaction.to} />
+            </div>
+
+            <SectionHeading icon={UserIcon}>Approval Workflow</SectionHeading>
             <div className="divide-y divide-slate-100 mb-5">
               <div className="flex items-center justify-between py-2.5">
-                <span className="text-[13px] text-slate-400">Service</span>
-                <span className="text-[13px] font-semibold text-slate-900">
-                  {transaction.service}
+                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">
+                  Created By
+                </span>
+                <span className="text-right">
+                  <span className="block text-[13px] font-semibold text-slate-900">
+                    {transaction.createdBy}
+                  </span>
+                  <span className="block text-[11px] text-slate-400 mt-0.5">
+                    {formatDateTimeLong(transaction.createdAt)}
+                  </span>
                 </span>
               </div>
-              <div className="flex items-center justify-between py-2.5">
-                <span className="text-[13px] text-slate-400">Reference</span>
-                <span className="text-[13px] font-semibold text-slate-900">
-                  {transaction.reference}
-                </span>
-              </div>
-              <div className="flex items-center justify-between py-2.5">
-                <span className="text-[13px] text-slate-400">Label</span>
-                <span className="text-[13px] font-semibold text-slate-900">
-                  {transaction.label}
-                </span>
-              </div>
-              <div className="flex items-center justify-between py-2.5">
-                <span className="text-[13px] text-slate-400">Status</span>
-                <span
-                  className={`text-[11.5px] font-semibold px-2.5 py-1 rounded-full ${statusStyles[transaction.status]}`}
-                >
-                  {transaction.status}
-                </span>
-              </div>
-              <div className="flex items-center justify-between py-2.5">
-                <span className="text-[13px] text-slate-400">From Account</span>
-                <span className="text-[13px] font-semibold text-slate-900">
-                  {transaction.fromAccount}
-                </span>
-              </div>
-              <div className="flex items-center justify-between py-2.5">
-                <span className="text-[13px] text-slate-400">To</span>
-                <span className="text-[13px] font-semibold text-slate-900">
-                  {transaction.to}
-                </span>
-              </div>
+              {transaction.approvedBy && (
+                <div className="flex items-center justify-between py-2.5">
+                  <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">
+                    Approved By
+                  </span>
+                  <span className="text-right">
+                    <span className="block text-[13px] font-semibold text-slate-900">
+                      {transaction.approvedBy}
+                    </span>
+                    <span className="block text-[11px] text-slate-400 mt-0.5">
+                      {formatDateTimeLong(transaction.approvedAt ?? transaction.createdAt)}
+                    </span>
+                  </span>
+                </div>
+              )}
             </div>
 
-            <h4 className="text-[12.5px] font-bold text-slate-500 uppercase tracking-wide mb-1">
-              Approval Workflow
-            </h4>
-            <div className="flex items-center justify-between py-2.5 mb-5">
-              <span className="text-[13px] text-slate-400">Created By</span>
-              <span className="text-right">
-                <span className="block text-[13px] font-semibold text-slate-900">
-                  {transaction.createdBy}
-                </span>
-                <span className="block text-[11.5px] text-slate-400 mt-0.5">
-                  {formatDateTime(transaction.createdAt)}
-                </span>
+            {hasFulfillment && (
+              <>
+                <SectionHeading icon={TruckIcon}>Fulfillment Details</SectionHeading>
+                <div className="divide-y divide-slate-100 mb-5">
+                  {transaction.externalReference && (
+                    <Row label="External Reference" value={transaction.externalReference} />
+                  )}
+                  {transaction.receiverName && (
+                    <Row label="Receiver Name" value={transaction.receiverName} />
+                  )}
+                  {transaction.description && (
+                    <Row label="Description" value={transaction.description} />
+                  )}
+                </div>
+              </>
+            )}
+
+            <SectionHeading icon={AttachmentIcon}>Confirmation Receipt</SectionHeading>
+            <label className="mb-5 flex flex-col items-center justify-center gap-1.5 px-4 py-6 border-2 border-dashed border-slate-300 rounded-xl text-center cursor-pointer hover:border-slate-400 transition-colors">
+              <UploadCloudIcon className="w-5 h-5 text-slate-400" />
+              <span className="text-[12.5px] font-semibold text-slate-600">
+                {receiptFileName ?? "Attach Confirmation Receipt"}
               </span>
-            </div>
+              <input
+                type="file"
+                className="hidden"
+                onChange={(e) => setReceiptFileName(e.target.files?.[0]?.name ?? null)}
+              />
+            </label>
 
             {transaction.status === "Pending" && (
               <button

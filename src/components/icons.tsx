@@ -334,3 +334,24 @@ export function UserIcon({ className = "" }: IconProps) {
     </svg>
   );
 }
+
+export function InfoIcon({ className = "" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className={`${base} ${className}`}>
+      <circle cx="12" cy="12" r="9" />
+      <line x1="12" y1="11" x2="12" y2="16.5" />
+      <circle cx="12" cy="7.8" r="0.9" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+export function TruckIcon({ className = "" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className={`${base} ${className}`}>
+      <path d="M2.5 6.5h11v10h-11Z" />
+      <path d="M13.5 10h4l3 3v3.5h-7Z" />
+      <circle cx="6.5" cy="18" r="1.7" />
+      <circle cx="16.5" cy="18" r="1.7" />
+    </svg>
+  );
+}

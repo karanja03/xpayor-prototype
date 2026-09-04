@@ -8,8 +8,13 @@ import { TransactionDetailsModal } from "@/components/TransactionDetailsModal";
 import { ArrowUpCircleIcon, EyeIcon, RefreshIcon } from "@/components/icons";
 import { accounts } from "@/lib/accounts";
 import { avatarFor } from "@/lib/avatar";
-import { formatDate, formatKES, formatMoney } from "@/lib/format";
-import { getTransactions, updateTransactionStatus, type Transaction } from "@/lib/store";
+import { formatKES, formatMoney } from "@/lib/format";
+import {
+  getTransactions,
+  isCreditTransaction,
+  updateTransactionStatus,
+  type Transaction,
+} from "@/lib/store";
 
 export default function HomePage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -85,7 +90,7 @@ export default function HomePage() {
 
         <div className="flex items-center justify-between mb-3.5">
           <h2 className="text-[15px] font-semibold text-slate-900">
-            Recent activity
+            Recent transactions
           </h2>
           <Link
             href="/transactions"
@@ -116,12 +121,10 @@ export default function HomePage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-[13.5px] font-semibold text-slate-900 truncate">
-                    {row.to}
+                    {row.description || row.label || row.to}
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-xs text-slate-400 truncate">
-                      {row.to === row.service ? formatDate(row.createdAt) : row.service}
-                    </span>
+                    <span className="text-xs text-slate-400 truncate">{row.to}</span>
                     <span
                       className={`text-[10.5px] font-semibold px-2 py-0.5 rounded-full ${statusStyles[row.status]} shrink-0`}
                     >
@@ -129,8 +132,23 @@ export default function HomePage() {
                     </span>
                   </div>
                 </div>
-                <div className="text-[13.5px] font-semibold text-slate-900 text-right shrink-0">
-                  {formatMoney(row.amount, row.currency)}
+                <div className="text-[13.5px] font-semibold text-slate-900 text-right shrink-0 flex items-center gap-1.5">
+                  <span
+                    className={`w-4.5 h-4.5 rounded-full flex items-center justify-center shrink-0 ${
+                      row.status === "Cancelled"
+                        ? "bg-slate-100 text-slate-400"
+                        : isCreditTransaction(row.service)
+                          ? "bg-green-100 text-green-600"
+                          : "bg-blue-100 text-blue-600"
+                    }`}
+                  >
+                    <ArrowUpCircleIcon
+                      className={`w-2.5 h-2.5 ${isCreditTransaction(row.service) ? "rotate-180" : ""}`}
+                    />
+                  </span>
+                  <span className={row.status === "Cancelled" ? "line-through text-slate-400" : ""}>
+                    {formatMoney(row.amount, row.currency)}
+                  </span>
                 </div>
               </button>
             );

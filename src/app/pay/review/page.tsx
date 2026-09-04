@@ -31,6 +31,7 @@ function ReviewInner() {
   const label = params.get("label") || payee || "—";
   const source = params.get("source") || "Product Testing B (KES)";
   const saveBen = params.get("saveBen") === "1";
+  const description = params.get("description") || undefined;
 
   const service = mode === "batch" ? "Batch File Upload" : serviceLabelFor(method, type);
   // For direct wallet-to-wallet payments (business/government/internal) the
@@ -52,6 +53,7 @@ function ReviewInner() {
       service,
       reference,
       label,
+      description: description || `Payment to ${reference !== "—" ? reference : to}`,
       amount,
       currency,
       fromAccount: source,

@@ -16,9 +16,9 @@ import {
 const navItems = [
   { key: "home", label: "Home", href: "/", icon: HomeIcon },
   // "Tasks" (an approval queue) is an Approver-side concept. This user is an
-  // Initiator, so the equivalent nav item is a read-only activity feed of
-  // payments they've submitted and their status - not an action queue.
-  { key: "activity", label: "Activity", href: "/transactions", icon: TransactionsIcon },
+  // Initiator, so the equivalent nav item is a read-only feed of payments
+  // they've submitted and their status - not an action queue.
+  { key: "transactions", label: "Transactions", href: "/transactions", icon: TransactionsIcon },
   { key: "statements", label: "Statements", icon: StatementsIcon },
   { key: "reimbursements", label: "Reimbursements", icon: ReimbursementsIcon },
   { key: "beneficiaries", label: "Beneficiaries", icon: BeneficiariesIcon },

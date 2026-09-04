@@ -174,6 +174,7 @@ function PaymentFormInner() {
     params.set("label", selectedLabel || payee);
     params.set("source", sourceAccount);
     params.set("saveBen", saveBeneficiary ? "1" : "0");
+    if (description.trim()) params.set("description", description.trim());
 
     if (batchMode === "batch") {
       params.set("reference", batchFileName ?? "");

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import type { FunctionComponent } from "react";
 import {
@@ -49,6 +49,28 @@ function iconForAnyPayee(name: string): IconComponent | undefined {
   return directTransferIcon(name);
 }
 
+// Brand logos are optional files dropped into public/logos/ - most won't
+// exist yet. Rendering an <img src> straight from SSR races React's
+// hydration: a fast localhost 404 fires the native error event before
+// React has attached onError, so the handler never runs and a broken-image
+// glyph sticks around. Pre-checking the URL client-side with a plain
+// Image() sidesteps that race entirely.
+function useLogoAvailable(src: string | undefined): boolean {
+  const [ok, setOk] = useState(false);
+  useEffect(() => {
+    if (!src) return;
+    let cancelled = false;
+    const img = new Image();
+    img.onload = () => !cancelled && setOk(true);
+    img.onerror = () => !cancelled && setOk(false);
+    img.src = src;
+    return () => {
+      cancelled = true;
+    };
+  }, [src]);
+  return ok;
+}
+
 function Tile({
   payee,
   onClick,
@@ -59,15 +81,26 @@ function Tile({
   icon?: IconResolver;
 }) {
   const Icon = icon?.(payee.name);
+  const showLogo = useLogoAvailable(payee.logo);
+
   return (
     <button
       onClick={onClick}
       className="flex flex-col items-center gap-2 w-full px-2.5 py-4 border border-slate-200 rounded-xl bg-white hover:border-brand-500 hover:shadow-sm transition-colors text-center"
     >
       <div
-        className={`w-11 h-11 rounded-[11px] ${payee.bg} ${payee.fg} flex items-center justify-center text-xs font-bold`}
+        className={`w-11 h-11 rounded-[11px] overflow-hidden ${
+          showLogo ? "bg-white border border-slate-100" : `${payee.bg} ${payee.fg}`
+        } flex items-center justify-center text-xs font-bold`}
       >
-        {Icon ? <Icon className="w-5 h-5" /> : payee.initials}
+        {showLogo ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={payee.logo} alt={payee.name} className="w-full h-full object-contain p-1.5" />
+        ) : Icon ? (
+          <Icon className="w-5 h-5" />
+        ) : (
+          payee.initials
+        )}
       </div>
       <div className="text-[12.5px] font-semibold text-slate-900 leading-tight">
         {payee.name}

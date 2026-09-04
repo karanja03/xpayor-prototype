@@ -4,19 +4,23 @@ export type Payee = {
   bg: string;
   fg: string;
   href?: string;
+  // Optional brand logo, e.g. "/logos/mpesa.png". Drop the file in
+  // public/logos/ and it's picked up automatically - the Tile component
+  // falls back to the initials badge above if the file isn't there yet.
+  logo?: string;
 };
 
 export const recentPayees: Payee[] = [
-  { name: "M-Pesa", initials: "M", bg: "bg-emerald-50", fg: "text-emerald-600" },
-  { name: "KRA", initials: "KRA", bg: "bg-emerald-800", fg: "text-white" },
+  { name: "M-Pesa", initials: "M", bg: "bg-emerald-50", fg: "text-emerald-600", logo: "/logos/mpesa.png" },
+  { name: "KRA", initials: "KRA", bg: "bg-emerald-800", fg: "text-white", logo: "/logos/kra.png" },
   { name: "Africa Cargo Handling Ltd", initials: "ACHL", bg: "bg-orange-50", fg: "text-orange-700" },
   { name: "Mitchell Cotts CFS", initials: "MC", bg: "bg-slate-100", fg: "text-slate-600" },
-  { name: "eCitizen", initials: "eC", bg: "bg-green-700", fg: "text-white" },
+  { name: "eCitizen", initials: "eC", bg: "bg-green-700", fg: "text-white", logo: "/logos/ecitizen.png" },
 ];
 
 export const governmentPayees: Payee[] = [
-  { name: "eCitizen", initials: "eC", bg: "bg-green-700", fg: "text-white" },
-  { name: "KRA", initials: "KRA", bg: "bg-emerald-800", fg: "text-white" },
+  { name: "eCitizen", initials: "eC", bg: "bg-green-700", fg: "text-white", logo: "/logos/ecitizen.png" },
+  { name: "KRA", initials: "KRA", bg: "bg-emerald-800", fg: "text-white", logo: "/logos/kra.png" },
   { name: "KPA", initials: "KPA", bg: "bg-blue-950", fg: "text-white" },
   { name: "NTSA", initials: "NTSA", bg: "bg-rose-900", fg: "text-white" },
   { name: "KEBS", initials: "KEBS", bg: "bg-teal-700", fg: "text-white" },
@@ -81,8 +85,8 @@ export const logisticsAll: Payee[] = [
 });
 
 export const directTransfers: Payee[] = [
-  { name: "M-Pesa", initials: "M", bg: "bg-emerald-50", fg: "text-emerald-600" },
-  { name: "Airtel Money", initials: "A", bg: "bg-red-50", fg: "text-red-600" },
+  { name: "M-Pesa", initials: "M", bg: "bg-emerald-50", fg: "text-emerald-600", logo: "/logos/mpesa.png" },
+  { name: "Airtel Money", initials: "A", bg: "bg-red-50", fg: "text-red-600", logo: "/logos/airtel.png" },
   { name: "Bank Transfer", initials: "B", bg: "bg-blue-50", fg: "text-blue-700" },
   { name: "Int'l Transfer", initials: "IT", bg: "bg-blue-50", fg: "text-blue-700" },
   { name: "Internal Transfer", initials: "IN", bg: "bg-purple-50", fg: "text-purple-700" },
