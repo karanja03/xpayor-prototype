@@ -21,10 +21,10 @@ export const recentPayees: Payee[] = [
 export const governmentPayees: Payee[] = [
   { name: "eCitizen", initials: "eC", bg: "bg-green-700", fg: "text-white", logo: "/logos/ecitizen.png" },
   { name: "KRA", initials: "KRA", bg: "bg-emerald-800", fg: "text-white", logo: "/logos/kra.png" },
-  { name: "KPA", initials: "KPA", bg: "bg-blue-950", fg: "text-white" },
-  { name: "NTSA", initials: "NTSA", bg: "bg-rose-900", fg: "text-white" },
-  { name: "KEBS", initials: "KEBS", bg: "bg-teal-700", fg: "text-white" },
-  { name: "SHA (NHIF)", initials: "SHA", bg: "bg-blue-800", fg: "text-white" },
+  { name: "KPA", initials: "KPA", bg: "bg-blue-950", fg: "text-white", logo: "/logos/kpa.png" },
+  { name: "NTSA", initials: "NTSA", bg: "bg-rose-900", fg: "text-white", logo: "/logos/ntsa.png" },
+  { name: "KEBS", initials: "KEBS", bg: "bg-teal-700", fg: "text-white", logo: "/logos/kebs.png" },
+  { name: "SHA (NHIF)", initials: "SHA", bg: "bg-blue-800", fg: "text-white", logo: "/logos/sha.png" },
 ];
 
 export const logisticsShown: Payee[] = [
@@ -107,6 +107,22 @@ export const allPayToOptions: Payee[] = [
   ...directTransfers,
   ...utilityPayees,
 ];
+
+// Everything findable by name, including the full logistics A-Z list that
+// allPayToOptions leaves out (that one only shows the "featured" subset on
+// the main Pay page). Used to resolve a favorited payee's display info
+// (colors/logo) regardless of which category it lives in.
+const allKnownPayees: Payee[] = [
+  ...governmentPayees,
+  ...logisticsShown,
+  ...logisticsAll,
+  ...directTransfers,
+  ...utilityPayees,
+];
+
+export function findPayee(name: string): Payee | undefined {
+  return allKnownPayees.find((p) => p.name === name);
+}
 
 export type PaymentLabel = { name: string; recent?: boolean };
 

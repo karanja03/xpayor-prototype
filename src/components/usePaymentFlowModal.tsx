@@ -47,16 +47,16 @@ function isUtilityPayee(name: string) {
   return utilityPayees.some((p) => p.name === name);
 }
 
-const methodChoices: { key: Method; label: string; sub: string; icon: IconComponent }[] = [
-  { key: "mpesa", label: "M-Pesa", sub: "Mobile money", icon: MobileMoneyIcon },
-  { key: "airtel", label: "Airtel Money", sub: "Mobile money", icon: MobileMoneyIcon },
-  { key: "bank", label: "Bank Transfer", sub: "Direct to account", icon: BankBuildingIcon },
+const methodChoices: { key: Method; label: string; sub: string; icon: IconComponent; color: string }[] = [
+  { key: "mpesa", label: "M-Pesa", sub: "Mobile money", icon: MobileMoneyIcon, color: "text-emerald-600" },
+  { key: "airtel", label: "Airtel Money", sub: "Mobile money", icon: MobileMoneyIcon, color: "text-red-600" },
+  { key: "bank", label: "Bank Transfer", sub: "Direct to account", icon: BankBuildingIcon, color: "text-blue-700" },
 ];
 
 const typeChoices = [
-  { key: "mobile", label: "Mobile", sub: "Mobile Number", icon: PhoneIcon },
-  { key: "paybill", label: "Paybill", sub: "Paybill Number", icon: ReceiptIcon },
-  { key: "till", label: "Till", sub: "Till Number", icon: StorefrontIcon },
+  { key: "mobile", label: "Mobile", sub: "Mobile Number", icon: PhoneIcon, color: "text-indigo-600" },
+  { key: "paybill", label: "Paybill", sub: "Paybill Number", icon: ReceiptIcon, color: "text-violet-600" },
+  { key: "till", label: "Till", sub: "Till Number", icon: StorefrontIcon, color: "text-orange-600" },
 ] as const;
 
 export function usePaymentFlowModal() {
@@ -176,11 +176,9 @@ export function usePaymentFlowModal() {
                   <button
                     key={opt.key}
                     onClick={() => pickMethod(opt.key)}
-                    className="flex items-center gap-3 px-4 py-3.5 rounded-lg border-[1.5px] border-slate-200 bg-white hover:border-brand-500 hover:bg-brand-50/40 text-left transition-colors"
+                    className="flex items-center gap-3.5 px-4 py-3.5 rounded-lg border-[1.5px] border-slate-200 bg-white hover:border-brand-500 hover:bg-brand-50/40 text-left transition-colors"
                   >
-                    <span className="w-9 h-9 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
-                      <Icon className="w-[18px] h-[18px]" />
-                    </span>
+                    <Icon className={`w-6 h-6 shrink-0 ${opt.color}`} />
                     <span>
                       <span className="block text-sm font-semibold text-slate-900">
                         {opt.label}
@@ -213,11 +211,9 @@ export function usePaymentFlowModal() {
                 <button
                   key={a.id}
                   onClick={() => pickInternalWallet(a.name)}
-                  className="flex items-center gap-3 px-4 py-3.5 rounded-lg border-[1.5px] border-slate-200 bg-white hover:border-brand-500 hover:bg-brand-50/40 text-left transition-colors"
+                  className="flex items-center gap-3.5 px-4 py-3.5 rounded-lg border-[1.5px] border-slate-200 bg-white hover:border-brand-500 hover:bg-brand-50/40 text-left transition-colors"
                 >
-                  <span className="w-9 h-9 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
-                    <BankBuildingIcon className="w-[18px] h-[18px]" />
-                  </span>
+                  <BankBuildingIcon className="w-6 h-6 shrink-0 text-blue-700" />
                   <span>
                     <span className="block text-sm font-semibold text-slate-900">
                       {a.name}
@@ -252,19 +248,13 @@ export function usePaymentFlowModal() {
                   <button
                     key={opt.key}
                     onClick={() => setType(opt.key)}
-                    className={`flex items-center gap-3 px-4 py-3.5 rounded-lg border-[1.5px] text-left transition-colors ${
+                    className={`flex items-center gap-3.5 px-4 py-3.5 rounded-lg border-[1.5px] text-left transition-colors ${
                       selected
                         ? "border-brand-600 bg-brand-50"
                         : "border-slate-200 bg-white"
                     }`}
                   >
-                    <span
-                      className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
-                        selected ? "bg-brand-100 text-brand-600" : "bg-slate-100 text-slate-600"
-                      }`}
-                    >
-                      <Icon className="w-[18px] h-[18px]" />
-                    </span>
+                    <Icon className={`w-6 h-6 shrink-0 ${opt.color}`} />
                     <span className="flex-1">
                       <span className="block text-sm font-semibold text-slate-900">
                         {opt.label}

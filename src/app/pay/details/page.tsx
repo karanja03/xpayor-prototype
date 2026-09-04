@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { TopBar } from "@/components/TopBar";
 import {
+  AlertCircleIcon,
   AttachmentIcon,
   ChevronDownIcon,
   DescriptionIcon,
@@ -14,8 +15,16 @@ import {
 import { paymentLabels } from "@/lib/data";
 import { addCustomLabel, getCustomLabels } from "@/lib/store";
 import { accounts, sourceAccountLabel } from "@/lib/accounts";
+import { formatMoney } from "@/lib/format";
 
 type FieldConfig = { key: string; label: string; placeholder: string };
+
+// Kenyan mobile numbers: 07xx/01xx xxx xxx, optionally with a 254 or +254
+// country code prefix.
+function isValidKenyanPhone(raw: string): boolean {
+  const digits = raw.replace(/[\s-]/g, "");
+  return /^(?:\+254|254|0)(7|1)\d{8}$/.test(digits);
+}
 
 function methodName(method: string) {
   if (method === "mpesa") return "M-Pesa";
@@ -65,9 +74,13 @@ function getFields(method: string, type: string): FieldConfig[] {
       { key: "swift", label: "SWIFT / BIC Code", placeholder: "e.g. NWBKGB2L" },
     ];
   }
-  if (method === "business" || method === "government" || method === "utility" || method === "internal") {
-    // Direct wallet-to-wallet payments - the recipient's account details are
-    // already on file, so there's nothing extra to collect beyond amount.
+  if (method === "business" || method === "government" || method === "utility") {
+    // The recipient's account/bank details are already on file for these -
+    // all that's needed is which bill/invoice this payment is for.
+    return [{ key: "reference", label: "Reference Number", placeholder: "e.g. INV-00234" }];
+  }
+  if (method === "internal") {
+    // Wallet-to-wallet within the business - nothing to collect beyond amount.
     return [];
   }
   return [{ key: "phone", label: "Phone Number", placeholder: "07XX XXX XXX" }];
@@ -127,6 +140,14 @@ function PaymentFormInner() {
   const [description, setDescription] = useState("");
   const [fileName, setFileName] = useState<string | null>(null);
 
+  // Business/Government/Utility payees already have their bank details on
+  // file - the reference just needs to be checked against a real bill/invoice
+  // before the payment can proceed, so those methods get a "Validate" step
+  // instead of continuing straight through.
+  const requiresValidation = method === "business" || method === "government" || method === "utility";
+  const [validating, setValidating] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
+
   const allKnownLabels = useMemo(
     () => [...customLabels, ...recentLabelsStatic, ...alphabeticalLabelsStatic],
     [customLabels]
@@ -162,10 +183,21 @@ function PaymentFormInner() {
     chooseLabel(trimmedQuery);
   }
 
-  const canContinue = batchMode === "single" || !!batchFileName;
+  const singleFieldsValid =
+    fields.every((f) => {
+      const v = (fieldValues[f.key] ?? "").trim();
+      if (!v) return false;
+      if (f.key === "phone") return isValidKenyanPhone(v);
+      return true;
+    }) && Number(amount) > 0;
+
+  const canSubmit =
+    (batchMode === "batch" ? !!batchFileName : singleFieldsValid) &&
+    !(requiresValidation && !!validationError);
 
   function handleContinue() {
-    if (!canContinue) return;
+    if (batchMode === "single" && !singleFieldsValid) return;
+    if (batchMode === "batch" && !batchFileName) return;
     const params = new URLSearchParams();
     params.set("method", method);
     params.set("type", type);
@@ -186,6 +218,32 @@ function PaymentFormInner() {
     }
 
     router.push(`/pay/review?${params.toString()}`);
+  }
+
+  async function runValidation() {
+    setValidating(true);
+    setValidationError(null);
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    const ref = (fieldValues.reference ?? "").trim();
+    // Demo-only simulated bill lookup: a reference that's shaped like a phone
+    // number isn't a real invoice/PRN for this recipient, so it fails the
+    // same way an unrecognized reference would against a real billing API.
+    const looksLikeAPhoneNumber = isValidKenyanPhone(ref);
+    setValidating(false);
+    if (looksLikeAPhoneNumber) {
+      setValidationError("Bill is either paid or does not exist");
+      return;
+    }
+    handleContinue();
+  }
+
+  function handlePrimaryAction() {
+    if (!canSubmit || validating) return;
+    if (requiresValidation) {
+      void runValidation();
+    } else {
+      handleContinue();
+    }
   }
 
   function handleBatchFile(file: File | null | undefined) {
@@ -275,22 +333,43 @@ function PaymentFormInner() {
 
         {batchMode === "single" ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-            {fields.map((f) => (
-              <div key={f.key}>
-                <label className="block text-[13px] font-semibold text-brand-600 mb-2">
-                  {f.label}
-                </label>
-                <input
-                  type="text"
-                  value={fieldValues[f.key] ?? ""}
-                  onChange={(e) =>
-                    setFieldValues((prev) => ({ ...prev, [f.key]: e.target.value }))
-                  }
-                  placeholder={f.placeholder}
-                  className="w-full px-4 py-3 border-2 border-brand-500 rounded-lg text-sm text-slate-900 outline-none"
-                />
-              </div>
-            ))}
+            {fields.map((f) => {
+              const value = fieldValues[f.key] ?? "";
+              const phoneInvalid = f.key === "phone" && value.trim() && !isValidKenyanPhone(value);
+              const referenceInvalid = f.key === "reference" && !!validationError;
+              const hasError = phoneInvalid || referenceInvalid;
+              return (
+                <div key={f.key}>
+                  <label className="block text-[13px] font-semibold text-brand-600 mb-2">
+                    {f.label}
+                  </label>
+                  <input
+                    type="text"
+                    value={value}
+                    onChange={(e) => {
+                      setFieldValues((prev) => ({ ...prev, [f.key]: e.target.value }));
+                      if (f.key === "reference" && validationError) setValidationError(null);
+                    }}
+                    placeholder={f.placeholder}
+                    className={`w-full px-4 py-3 border-2 rounded-lg text-sm text-slate-900 outline-none ${
+                      hasError ? "border-red-400" : "border-brand-500"
+                    }`}
+                  />
+                  {phoneInvalid && (
+                    <p className="flex items-center gap-1 text-xs text-red-600 mt-1.5">
+                      <AlertCircleIcon className="w-3.5 h-3.5 shrink-0" />
+                      Enter a valid phone number, e.g. 07XX XXX XXX
+                    </p>
+                  )}
+                  {referenceInvalid && (
+                    <p className="flex items-center gap-1 text-xs text-red-600 mt-1.5">
+                      <AlertCircleIcon className="w-3.5 h-3.5 shrink-0" />
+                      {validationError}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
             <div className={fields.length > 1 ? "sm:col-span-2 max-w-xs" : ""}>
               <label className="block text-[13px] font-semibold text-brand-600 mb-2">
                 Amount
@@ -480,6 +559,20 @@ function PaymentFormInner() {
           />
         )}
 
+        {batchMode === "single" && (
+          <>
+            <div className="h-px bg-slate-200 mb-5" />
+            <div className="flex items-center justify-between mb-6">
+              <span className="text-sm font-bold text-slate-900">Total</span>
+              <span className="text-base font-bold text-slate-900">
+                {formatMoney(Number(amount) || 0, currency)}
+              </span>
+            </div>
+          </>
+        )}
+
+        <div className="h-px bg-slate-200 mb-6" />
+
         <div className="flex gap-3">
           <button
             onClick={() => router.push("/pay")}
@@ -488,11 +581,11 @@ function PaymentFormInner() {
             Back
           </button>
           <button
-            onClick={handleContinue}
-            disabled={!canContinue}
+            onClick={handlePrimaryAction}
+            disabled={!canSubmit || validating}
             className="flex-1 sm:flex-none sm:px-8 py-3 bg-brand-600 hover:bg-brand-700 disabled:opacity-40 disabled:hover:bg-brand-600 disabled:cursor-not-allowed text-white rounded-lg text-sm font-semibold transition-colors"
           >
-            Continue
+            {validating ? "Validating..." : requiresValidation ? "Validate" : "Continue"}
           </button>
         </div>
       </div>

@@ -119,6 +119,8 @@ function ReviewInner() {
           </div>
         )}
 
+        <div className="h-px bg-slate-200 mb-6" />
+
         <div className="flex gap-3">
           <button
             onClick={() => router.back()}

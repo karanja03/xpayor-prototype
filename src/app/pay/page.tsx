@@ -13,17 +13,20 @@ import {
   RefreshIcon,
   SearchIcon,
   ShipIcon,
+  StarIcon,
 } from "@/components/icons";
 import { usePaymentFlowModal } from "@/components/usePaymentFlowModal";
 import {
   allPayToOptions,
   directTransfers,
+  findPayee,
   governmentPayees,
   logisticsShown,
   recentPayees,
   utilityPayees,
   type Payee,
 } from "@/lib/data";
+import { getFavoritePayees, toggleFavoritePayee } from "@/lib/store";
 import { AppShell } from "@/components/AppShell";
 import { TopBar } from "@/components/TopBar";
 
@@ -71,41 +74,97 @@ function useLogoAvailable(src: string | undefined): boolean {
   return ok;
 }
 
+function PayeeAvatar({
+  payee,
+  icon: Icon,
+  shape = "square",
+  className = "",
+}: {
+  payee: Payee;
+  icon?: IconComponent;
+  shape?: "square" | "circle";
+  className?: string;
+}) {
+  const showLogo = useLogoAvailable(payee.logo);
+  return (
+    <div
+      className={`overflow-hidden flex items-center justify-center font-bold ${
+        shape === "circle" ? "rounded-full" : "rounded-[11px]"
+      } ${showLogo ? "bg-white border border-slate-100" : `${payee.bg} ${payee.fg}`} ${className}`}
+    >
+      {showLogo ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={payee.logo} alt={payee.name} className="w-full h-full object-contain p-1" />
+      ) : Icon ? (
+        <Icon className="w-5 h-5" />
+      ) : (
+        payee.initials
+      )}
+    </div>
+  );
+}
+
+function FavoriteToggle({
+  active,
+  onToggle,
+  name,
+}: {
+  active: boolean;
+  onToggle: () => void;
+  name: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        onToggle();
+      }}
+      aria-label={active ? `Remove ${name} from frequent` : `Mark ${name} as frequent`}
+      aria-pressed={active}
+      className={`absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-white/95 flex items-center justify-center shadow-sm transition-colors ${
+        active ? "text-amber-500" : "text-slate-300 hover:text-amber-400"
+      }`}
+    >
+      <StarIcon className="w-4 h-4" filled={active} />
+    </button>
+  );
+}
+
 function Tile({
   payee,
   onClick,
   icon,
+  isFavorite,
+  onToggleFavorite,
 }: {
   payee: Payee;
   onClick: () => void;
   icon?: IconResolver;
+  isFavorite?: boolean;
+  onToggleFavorite?: (name: string) => void;
 }) {
   const Icon = icon?.(payee.name);
-  const showLogo = useLogoAvailable(payee.logo);
 
   return (
-    <button
-      onClick={onClick}
-      className="flex flex-col items-center gap-2 w-full px-2.5 py-4 border border-slate-200 rounded-xl bg-white hover:border-brand-500 hover:shadow-sm transition-colors text-center"
-    >
-      <div
-        className={`w-11 h-11 rounded-[11px] overflow-hidden ${
-          showLogo ? "bg-white border border-slate-100" : `${payee.bg} ${payee.fg}`
-        } flex items-center justify-center text-xs font-bold`}
+    <div className="relative">
+      <button
+        onClick={onClick}
+        className="flex flex-col items-center gap-2 w-full px-2.5 py-4 border border-slate-200 rounded-xl bg-white hover:border-brand-500 hover:shadow-sm transition-colors text-center"
       >
-        {showLogo ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={payee.logo} alt={payee.name} className="w-full h-full object-contain p-1.5" />
-        ) : Icon ? (
-          <Icon className="w-5 h-5" />
-        ) : (
-          payee.initials
-        )}
-      </div>
-      <div className="text-[12.5px] font-semibold text-slate-900 leading-tight">
-        {payee.name}
-      </div>
-    </button>
+        <PayeeAvatar payee={payee} icon={Icon} className="w-12 h-12 text-xs" />
+        <div className="text-[12.5px] font-semibold text-slate-900 leading-tight">
+          {payee.name}
+        </div>
+      </button>
+      {onToggleFavorite && (
+        <FavoriteToggle
+          active={!!isFavorite}
+          onToggle={() => onToggleFavorite(payee.name)}
+          name={payee.name}
+        />
+      )}
+    </div>
   );
 }
 
@@ -115,7 +174,7 @@ function ViewAllTile({ href, count }: { href: string; count: number }) {
       href={href}
       className="flex flex-col items-center justify-center gap-2 w-full px-2.5 py-4 border border-dashed border-slate-300 rounded-xl bg-white hover:border-brand-500 hover:bg-brand-50/40 transition-colors text-center"
     >
-      <div className="w-11 h-11 rounded-[11px] bg-slate-100 text-slate-500 flex items-center justify-center">
+      <div className="w-12 h-12 rounded-[11px] bg-slate-100 text-slate-500 flex items-center justify-center">
         <ArrowRightIcon className="w-5 h-5" />
       </div>
       <div className="text-[12.5px] font-semibold text-brand-600 leading-tight">
@@ -132,6 +191,8 @@ function CategorySection({
   icon,
   viewAllHref,
   viewAllCount,
+  favoriteNames,
+  onToggleFavorite,
   last = false,
 }: {
   title: string;
@@ -140,28 +201,62 @@ function CategorySection({
   icon?: IconResolver;
   viewAllHref?: string;
   viewAllCount?: number;
+  favoriteNames?: Set<string>;
+  onToggleFavorite?: (name: string) => void;
   last?: boolean;
 }) {
   return (
-    <section className={last ? "" : "mb-8"}>
-      <h2 className="text-[13px] font-bold text-slate-500 uppercase tracking-wide mb-3.5">
-        {title}
-      </h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-        {items.map((p) => (
-          <Tile key={p.name} payee={p} onClick={() => onTileClick(p.name)} icon={icon} />
-        ))}
-        {viewAllHref && viewAllCount && (
-          <ViewAllTile href={viewAllHref} count={viewAllCount} />
-        )}
-      </div>
-    </section>
+    <>
+      <section className="mb-7">
+        <h2 className="text-[13px] font-bold text-slate-500 uppercase tracking-wide mb-3.5">
+          {title}
+        </h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+          {items.map((p) => (
+            <Tile
+              key={p.name}
+              payee={p}
+              onClick={() => onTileClick(p.name)}
+              icon={icon}
+              isFavorite={favoriteNames?.has(p.name)}
+              onToggleFavorite={onToggleFavorite}
+            />
+          ))}
+          {viewAllHref && viewAllCount && (
+            <ViewAllTile href={viewAllHref} count={viewAllCount} />
+          )}
+        </div>
+      </section>
+      {!last && <div className="h-px bg-slate-200 mb-8" />}
+    </>
   );
 }
 
 export default function PayToPage() {
   const [query, setQuery] = useState("");
+  const [favoriteNamesList, setFavoriteNamesList] = useState<string[]>([]);
   const { openFor, modal } = usePaymentFlowModal();
+
+  useEffect(() => {
+    setFavoriteNamesList(getFavoritePayees());
+  }, []);
+
+  function handleToggleFavorite(name: string) {
+    toggleFavoritePayee(name);
+    setFavoriteNamesList(getFavoritePayees());
+  }
+
+  const favoriteNames = useMemo(() => new Set(favoriteNamesList), [favoriteNamesList]);
+
+  const frequentPayees = useMemo(() => {
+    const merged = [...recentPayees];
+    for (const name of favoriteNamesList) {
+      if (merged.some((p) => p.name === name)) continue;
+      const payee = findPayee(name);
+      if (payee) merged.push(payee);
+    }
+    return merged;
+  }, [favoriteNamesList]);
 
   const hasQuery = query.trim().length > 0;
   const matches = useMemo(() => {
@@ -176,7 +271,7 @@ export default function PayToPage() {
 
       <div className="p-4 sm:p-8 md:p-10 pb-16 max-w-4xl mx-auto">
         <h1 className="text-[22px] font-bold text-slate-900 mb-5">
-          Who are you paying?
+         Pay to
         </h1>
 
         <div className="relative mb-7">
@@ -210,11 +305,7 @@ export default function PayToPage() {
                       onClick={() => openFor(p.name)}
                       className="flex items-center gap-3 px-3.5 py-3 border border-slate-200 rounded-lg bg-white hover:border-brand-500 text-left transition-colors"
                     >
-                      <div
-                        className={`w-9.5 h-9.5 rounded-[10px] ${p.bg} ${p.fg} flex items-center justify-center text-[11px] font-bold shrink-0`}
-                      >
-                        {Icon ? <Icon className="w-4.5 h-4.5" /> : p.initials}
-                      </div>
+                      <PayeeAvatar payee={p} icon={Icon} className="w-9.5 h-9.5 text-[11px] shrink-0" />
                       <div className="text-[13.5px] font-semibold text-slate-900">
                         {p.name}
                       </div>
@@ -231,17 +322,13 @@ export default function PayToPage() {
                 Recent &amp; frequent
               </h2>
               <div className="flex gap-5.5 flex-wrap">
-                {recentPayees.map((p) => (
+                {frequentPayees.map((p) => (
                   <button
                     key={p.name}
                     onClick={() => openFor(p.name)}
                     className="flex flex-col items-center gap-2 w-20"
                   >
-                    <div
-                      className={`w-13 h-13 rounded-full ${p.bg} ${p.fg} flex items-center justify-center text-[13px] font-bold`}
-                    >
-                      {p.initials}
-                    </div>
+                    <PayeeAvatar payee={p} shape="circle" className="w-14 h-14 text-[13px]" />
                     <div className="text-[11.5px] font-semibold text-slate-600 text-center leading-tight truncate w-full">
                       {p.name}
                     </div>
@@ -250,13 +337,15 @@ export default function PayToPage() {
               </div>
             </section>
 
-            <div className="h-px bg-slate-200 mb-7" />
+            <div className="h-px bg-slate-200 mb-8" />
 
             <CategorySection
               title="Government & Statutory"
               items={governmentPayees}
               onTileClick={openFor}
               icon={constIcon(GovBuildingIcon)}
+              favoriteNames={favoriteNames}
+              onToggleFavorite={handleToggleFavorite}
             />
             <CategorySection
               title="Logistics & Freight"
@@ -265,6 +354,8 @@ export default function PayToPage() {
               icon={constIcon(ShipIcon)}
               viewAllHref="/pay/logistics"
               viewAllCount={32}
+              favoriteNames={favoriteNames}
+              onToggleFavorite={handleToggleFavorite}
             />
             <CategorySection
               title="Direct Transfers"
@@ -277,6 +368,8 @@ export default function PayToPage() {
               items={utilityPayees}
               onTileClick={openFor}
               icon={constIcon(BoltIcon)}
+              favoriteNames={favoriteNames}
+              onToggleFavorite={handleToggleFavorite}
               last
             />
           </div>

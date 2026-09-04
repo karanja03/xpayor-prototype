@@ -38,6 +38,7 @@ export type Beneficiary = {
 const TX_KEY = "xpayor_transactions_v1";
 const LABELS_KEY = "xpayor_custom_labels_v1";
 const BENEFICIARIES_KEY = "xpayor_beneficiaries_v1";
+const FAVORITE_PAYEES_KEY = "xpayor_favorite_payees_v1";
 
 function daysAgo(n: number, h = 12, m = 0): string {
   const d = new Date();
@@ -295,6 +296,24 @@ export function addCustomLabel(name: string) {
   const existing = getCustomLabels();
   if (existing.some((l) => l.toLowerCase() === trimmed.toLowerCase())) return;
   writeJSON(LABELS_KEY, [trimmed, ...existing]);
+}
+
+export function getFavoritePayees(): string[] {
+  return readJSON<string[]>(FAVORITE_PAYEES_KEY, []);
+}
+
+export function isFavoritePayee(name: string): boolean {
+  return getFavoritePayees().includes(name);
+}
+
+export function toggleFavoritePayee(name: string): boolean {
+  const existing = getFavoritePayees();
+  const isFavorite = existing.includes(name);
+  writeJSON(
+    FAVORITE_PAYEES_KEY,
+    isFavorite ? existing.filter((n) => n !== name) : [name, ...existing]
+  );
+  return !isFavorite;
 }
 
 export function getBeneficiaries(): Beneficiary[] {
