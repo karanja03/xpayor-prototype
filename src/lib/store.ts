@@ -316,6 +316,14 @@ export function toggleFavoritePayee(name: string): boolean {
   return !isFavorite;
 }
 
+// Idempotent add, for the "Save as frequent" checkbox on the payment form -
+// checking the box should never *unfavorite* an already-favorited payee.
+export function addFavoritePayee(name: string) {
+  const existing = getFavoritePayees();
+  if (existing.includes(name)) return;
+  writeJSON(FAVORITE_PAYEES_KEY, [name, ...existing]);
+}
+
 export function getBeneficiaries(): Beneficiary[] {
   return readJSON<Beneficiary[]>(BENEFICIARIES_KEY, []);
 }
@@ -324,4 +332,39 @@ export function addBeneficiary(b: Beneficiary) {
   const existing = getBeneficiaries();
   if (existing.some((e) => e.account === b.account && e.method === b.method)) return;
   writeJSON(BENEFICIARIES_KEY, [b, ...existing]);
+}
+
+// "Frequent shortcuts" cover direct-transfer payments (M-Pesa/Airtel/Bank),
+// which have no fixed payee name in the static catalog the way a business or
+// government entity does - the destination only exists once the phone/
+// paybill/account number is typed on the details form. Saving one lets it
+// reappear as a one-tap tile under Recent & Frequent, prefilled, skipping
+// the destination-picker and method/type modal entirely next time.
+export type FrequentShortcut = {
+  id: string;
+  label: string;
+  initials: string;
+  bg: string;
+  fg: string;
+  method: "mpesa" | "airtel" | "bank";
+  type?: string;
+  fields: Record<string, string>;
+  createdAt: string;
+};
+
+const FREQUENT_SHORTCUTS_KEY = "xpayor_frequent_shortcuts_v1";
+
+function shortcutId(method: string, type: string | undefined, fields: Record<string, string>): string {
+  return [method, type ?? "", ...Object.values(fields)].join(":");
+}
+
+export function getFrequentShortcuts(): FrequentShortcut[] {
+  return readJSON<FrequentShortcut[]>(FREQUENT_SHORTCUTS_KEY, []);
+}
+
+export function addFrequentShortcut(entry: Omit<FrequentShortcut, "id" | "createdAt">) {
+  const id = shortcutId(entry.method, entry.type, entry.fields);
+  const existing = getFrequentShortcuts();
+  if (existing.some((e) => e.id === id)) return;
+  writeJSON(FREQUENT_SHORTCUTS_KEY, [{ ...entry, id, createdAt: new Date().toISOString() }, ...existing]);
 }

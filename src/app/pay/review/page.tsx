@@ -5,8 +5,33 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { TopBar } from "@/components/TopBar";
 import { serviceLabelFor } from "@/app/pay/details/page";
-import { addBeneficiary, addTransaction, genXPayorRef } from "@/lib/store";
+import { addBeneficiary, addFavoritePayee, addFrequentShortcut, addTransaction, genXPayorRef } from "@/lib/store";
 import { formatMoney } from "@/lib/format";
+
+const directTransferColors: Record<string, { bg: string; fg: string }> = {
+  mpesa: { bg: "bg-emerald-50", fg: "text-emerald-600" },
+  airtel: { bg: "bg-red-50", fg: "text-red-600" },
+  bank: { bg: "bg-blue-50", fg: "text-blue-700" },
+};
+
+function initialsFor(label: string): string {
+  const words = label.trim().split(/\s+/).filter(Boolean);
+  return ((words[0]?.[0] ?? "") + (words[1]?.[0] ?? "")).toUpperCase() || "?";
+}
+
+function shortcutFieldsFor(method: string, type: string, params: URLSearchParams): Record<string, string> {
+  if (method === "mpesa" || method === "airtel") {
+    if (type === "paybill") {
+      return { paybill: params.get("paybill") ?? "", account: params.get("account") ?? "" };
+    }
+    if (type === "till") return { till: params.get("till") ?? "" };
+    return { phone: params.get("phone") ?? "" };
+  }
+  if (method === "bank") {
+    return { accountNumber: params.get("accountNumber") ?? "", bankName: params.get("bankName") ?? "" };
+  }
+  return {};
+}
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
@@ -31,6 +56,7 @@ function ReviewInner() {
   const label = params.get("label") || payee || "—";
   const source = params.get("source") || "Product Testing B (KES)";
   const saveBen = params.get("saveBen") === "1";
+  const saveFrequent = params.get("saveFrequent") === "1";
   const description = params.get("description") || undefined;
 
   const service = mode === "batch" ? "Batch File Upload" : serviceLabelFor(method, type);
@@ -70,6 +96,25 @@ function ReviewInner() {
         account: reference,
         createdAt: new Date().toISOString(),
       });
+    }
+    if (saveFrequent && mode === "single") {
+      if (payee && (method === "business" || method === "government" || method === "utility")) {
+        addFavoritePayee(payee);
+      } else if (method === "mpesa" || method === "airtel" || method === "bank") {
+        const shortcutFields = shortcutFieldsFor(method, type, params);
+        if (Object.values(shortcutFields).some(Boolean)) {
+          const colors = directTransferColors[method];
+          addFrequentShortcut({
+            label: label !== "—" ? label : service,
+            initials: initialsFor(label !== "—" ? label : service),
+            bg: colors.bg,
+            fg: colors.fg,
+            method,
+            type,
+            fields: shortcutFields,
+          });
+        }
+      }
     }
     router.push(`/pay/confirmation?ref=${id}`);
   }

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { FunctionComponent } from "react";
 import {
   ArrowRightIcon,
@@ -26,7 +27,7 @@ import {
   utilityPayees,
   type Payee,
 } from "@/lib/data";
-import { getFavoritePayees, toggleFavoritePayee } from "@/lib/store";
+import { getFavoritePayees, getFrequentShortcuts, toggleFavoritePayee, type FrequentShortcut } from "@/lib/store";
 import { AppShell } from "@/components/AppShell";
 import { TopBar } from "@/components/TopBar";
 
@@ -42,6 +43,12 @@ function directTransferIcon(name: string): IconComponent | undefined {
   if (name === "Bank Transfer") return BankBuildingIcon;
   if (name === "Int'l Transfer") return GlobeIcon;
   if (name === "Internal Transfer") return RefreshIcon;
+  return undefined;
+}
+
+function iconForShortcutMethod(method: string): IconComponent | undefined {
+  if (method === "mpesa" || method === "airtel") return MobileMoneyIcon;
+  if (method === "bank") return BankBuildingIcon;
   return undefined;
 }
 
@@ -233,17 +240,34 @@ function CategorySection({
 }
 
 export default function PayToPage() {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [favoriteNamesList, setFavoriteNamesList] = useState<string[]>([]);
+  const [frequentShortcuts, setFrequentShortcuts] = useState<FrequentShortcut[]>([]);
   const { openFor, modal } = usePaymentFlowModal();
 
   useEffect(() => {
     setFavoriteNamesList(getFavoritePayees());
+    setFrequentShortcuts(getFrequentShortcuts());
   }, []);
 
   function handleToggleFavorite(name: string) {
     toggleFavoritePayee(name);
     setFavoriteNamesList(getFavoritePayees());
+  }
+
+  // Direct-transfer shortcuts have no fixed payee - deep-link straight to
+  // details with the saved phone/paybill/account prefilled, skipping the
+  // destination picker and method/type modal entirely.
+  function openShortcut(s: FrequentShortcut) {
+    const params = new URLSearchParams();
+    params.set("method", s.method);
+    if (s.type) params.set("type", s.type);
+    params.set("label", s.label);
+    for (const [key, value] of Object.entries(s.fields)) {
+      if (value) params.set(key, value);
+    }
+    router.push(`/pay/details?${params.toString()}`);
   }
 
   const favoriteNames = useMemo(() => new Set(favoriteNamesList), [favoriteNamesList]);
@@ -331,6 +355,23 @@ export default function PayToPage() {
                     <PayeeAvatar payee={p} shape="circle" className="w-14 h-14 text-[13px]" />
                     <div className="text-[11.5px] font-semibold text-slate-600 text-center leading-tight truncate w-full">
                       {p.name}
+                    </div>
+                  </button>
+                ))}
+                {frequentShortcuts.map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() => openShortcut(s)}
+                    className="flex flex-col items-center gap-2 w-20"
+                  >
+                    <PayeeAvatar
+                      payee={{ name: s.label, initials: s.initials, bg: s.bg, fg: s.fg }}
+                      icon={iconForShortcutMethod(s.method)}
+                      shape="circle"
+                      className="w-14 h-14 text-[13px]"
+                    />
+                    <div className="text-[11.5px] font-semibold text-slate-600 text-center leading-tight truncate w-full">
+                      {s.label}
                     </div>
                   </button>
                 ))}

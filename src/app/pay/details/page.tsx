@@ -108,6 +108,14 @@ function PaymentFormInner() {
         ? `Pay ${payee}`
         : `Pay ${service}`;
 
+  // M-Pesa/Airtel/Bank payments have no fixed payee, so a saved "frequent"
+  // shortcut deep-links here with the field values (phone/paybill/account)
+  // already in the URL, prefilling the form instead of the payee param.
+  const isDirectTransfer = method === "mpesa" || method === "airtel" || method === "bank";
+  const canSaveBeneficiary = isDirectTransfer;
+  const canSaveFrequent =
+    isDirectTransfer || method === "business" || method === "government" || method === "utility";
+
   const availableSourceAccounts = useMemo(
     () => (method === "internal" && payee ? accounts.filter((a) => a.name !== payee) : accounts),
     [method, payee]
@@ -117,7 +125,14 @@ function PaymentFormInner() {
   const [batchFileName, setBatchFileName] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
 
-  const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
+  const [fieldValues, setFieldValues] = useState<Record<string, string>>(() => {
+    const initial: Record<string, string> = {};
+    for (const f of fields) {
+      const v = searchParams.get(f.key);
+      if (v) initial[f.key] = v;
+    }
+    return initial;
+  });
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState<"KES" | "USD">("KES");
   const [sourceAccount, setSourceAccount] = useState(() =>
@@ -125,6 +140,7 @@ function PaymentFormInner() {
   );
   const [sourceOpen, setSourceOpen] = useState(false);
   const [saveBeneficiary, setSaveBeneficiary] = useState(false);
+  const [saveFrequent, setSaveFrequent] = useState(false);
 
   const [customLabels, setCustomLabels] = useState<string[]>([]);
   useEffect(() => {
@@ -133,7 +149,7 @@ function PaymentFormInner() {
 
   const [labelOpen, setLabelOpen] = useState(false);
   const [labelQuery, setLabelQuery] = useState("");
-  const [selectedLabel, setSelectedLabel] = useState(payee);
+  const [selectedLabel, setSelectedLabel] = useState(payee || searchParams.get("label") || "");
   const labelInputRef = useRef<HTMLInputElement>(null);
 
   const [descOpen, setDescOpen] = useState(false);
@@ -205,7 +221,8 @@ function PaymentFormInner() {
     params.set("mode", batchMode);
     params.set("label", selectedLabel || payee);
     params.set("source", sourceAccount);
-    params.set("saveBen", saveBeneficiary ? "1" : "0");
+    params.set("saveBen", canSaveBeneficiary && saveBeneficiary ? "1" : "0");
+    params.set("saveFrequent", canSaveFrequent && saveFrequent ? "1" : "0");
     if (description.trim()) params.set("description", description.trim());
 
     if (batchMode === "batch") {
@@ -447,17 +464,33 @@ function PaymentFormInner() {
           </div>
         )}
 
-        <label className="flex items-center gap-2.5 mb-6 cursor-pointer select-none">
-          <input
-            type="checkbox"
-            checked={saveBeneficiary}
-            onChange={(e) => setSaveBeneficiary(e.target.checked)}
-            className="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
-          />
-          <span className="text-[13px] font-medium text-slate-600">
-            Save as a beneficiary for faster payments next time
-          </span>
-        </label>
+        {canSaveBeneficiary && (
+          <label className="flex items-center gap-2.5 mb-3 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={saveBeneficiary}
+              onChange={(e) => setSaveBeneficiary(e.target.checked)}
+              className="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+            />
+            <span className="text-[13px] font-medium text-slate-600">
+              Save as a beneficiary for faster payments next time
+            </span>
+          </label>
+        )}
+
+        {canSaveFrequent && (
+          <label className="flex items-center gap-2.5 mb-6 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={saveFrequent}
+              onChange={(e) => setSaveFrequent(e.target.checked)}
+              className="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+            />
+            <span className="text-[13px] font-medium text-slate-600">
+              Save as frequent so it shows under Recent &amp; Frequent
+            </span>
+          </label>
+        )}
 
         <div className="mb-6 relative">
           <label className="block text-[13px] font-semibold text-slate-700 mb-2">
